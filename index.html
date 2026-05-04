@@ -1,9 +1,10 @@
-<!DOCTYPE html>
-<!-- saved from url=(0066)file:///C:/Users/giselle.souza/Downloads/pm-goals-dashboard_4.html -->
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PM Goals Dashboard · D&amp;A 2026</title>
+<title>PM Goals Dashboard · D&A 2026</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f4f0; color: #1a1a18; min-height: 100vh; }
@@ -145,7 +146,7 @@
     <div class="cycle" id="cycle-label">Carregando…</div>
   </div>
   <div class="header-right">
-    <span class="sync-status err" id="sync-status">Erro: Failed to fetch</span>
+    <span class="sync-status" id="sync-status"></span>
     <button class="sync-btn" id="sync-btn" onclick="loadFromSheets()">↻ Atualizar dados</button>
   </div>
 </div>
@@ -153,29 +154,30 @@
 <div class="layout">
   <nav class="sidebar">
     <div class="sidebar-section">Views</div>
-    <button class="nav-btn active" onclick="showTab(&#39;overview&#39;)">Overview <span class="nav-badge red" id="badge-overview"></span></button>
-    <button class="nav-btn" onclick="showTab(&#39;missing&#39;)">Sem update <span class="nav-badge red" id="badge-missing"></span></button>
-    <button class="nav-btn" onclick="showTab(&#39;risk&#39;)">At Risk <span class="nav-badge yellow" id="badge-risk"></span></button>
-    <button class="nav-btn" onclick="showTab(&#39;all&#39;)">Todos os Goals <span class="nav-badge" id="badge-all"></span></button>
+    <button class="nav-btn active" onclick="showTab('overview')">Overview <span class="nav-badge red" id="badge-overview"></span></button>
+    <button class="nav-btn" onclick="showTab('missing')">Sem update <span class="nav-badge red" id="badge-missing"></span></button>
+    <button class="nav-btn" onclick="showTab('risk')">At Risk <span class="nav-badge yellow" id="badge-risk"></span></button>
+    <button class="nav-btn" onclick="showTab('all')">Todos os Goals <span class="nav-badge" id="badge-all"></span></button>
     <div class="sidebar-section" style="margin-top:10px;">AI Tools</div>
-    <button class="nav-btn" onclick="showTab(&#39;analysis&#39;)">AI Analysis ✦</button>
-    <button class="nav-btn marcela" onclick="showTab(&#39;marcela&#39;)">Marcela Mode ✦</button>
+    <button class="nav-btn" onclick="showTab('analysis')">AI Analysis ✦</button>
+    <button class="nav-btn marcela" onclick="showTab('marcela')">Marcela Mode ✦</button>
   </nav>
 
   <main class="main">
-    <div id="tab-overview" data-rendered="" style="display: block;"><div class="loading-screen"><div style="font-size:13px;color:#a32d2d">Não foi possível carregar.<br><small>Failed to fetch</small></div><button class="run-btn" onclick="loadFromSheets()" style="margin-top:12px">Tentar novamente</button></div></div>
-    <div id="tab-missing" style="display:none" data-rendered=""></div>
-    <div id="tab-risk" style="display:none" data-rendered=""></div>
-    <div id="tab-all" style="display:none" data-rendered=""></div>
-    <div id="tab-analysis" style="display:none" data-rendered=""></div>
-    <div id="tab-marcela" style="display:none" data-rendered=""></div>
+    <div id="tab-overview"></div>
+    <div id="tab-missing" style="display:none"></div>
+    <div id="tab-risk" style="display:none"></div>
+    <div id="tab-all" style="display:none"></div>
+    <div id="tab-analysis" style="display:none"></div>
+    <div id="tab-marcela" style="display:none"></div>
   </main>
 </div>
 
 <script>
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const SHEET_ID  = '13jJO1S_DnRbtfuqEsKL6PYOsmEQX9WvGXoXRSQhef7I';
-const SHEET_TAB = 'Q2C1'; // ← mude aqui a cada ciclo (ex: Q2C2, Q3C1…)
+// ← Quando mudar de ciclo: publique a nova aba como CSV e cole a URL aqui
+const CSV_URL   = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIrZMPY27RCdqsKL8AbARpZysFzgphs6ieXdtCTShP0rSgRKL6MTbYLQWdl9KXCO75BTg_da8zKiG9/pub?gid=1663621896&single=true&output=csv';
+const SHEET_TAB = 'Q2C1'; // usado só para exibir o nome do ciclo
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 let DATA = [];
@@ -203,7 +205,20 @@ async function loadFromSheets() {
     '<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Buscando dados do Google Sheets…</div></div>';
 
   try {
-    const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIrZMPY27RCdqsKL8AbARpZysFzgphs6ieXdtCTShP0rSgRKL6MTbYLQWdl9KXCO75BTg_da8zKiG9/pub?gid=1663621896&single=true&output=csv';
+    // Tenta múltiplos proxies em sequência caso um falhe
+    const proxies = [
+      'https://api.allorigins.win/raw?url=',
+      'https://corsproxy.io/?',
+      'https://cors-anywhere.herokuapp.com/',
+    ];
+    let res, lastErr;
+    for (const proxy of proxies) {
+      try {
+        res = await fetch(proxy + encodeURIComponent(CSV_URL));
+        if (res.ok) break;
+      } catch(e) { lastErr = e; res = null; }
+    }
+    if (!res || !res.ok) throw new Error(lastErr?.message || 'Todos os proxies falharam');
     const res = await fetch(url);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const csv = await res.text();
@@ -606,6 +621,5 @@ function updateBadges() {
 // ── INIT ───────────────────────────────────────────────────────────────────
 loadFromSheets();
 </script>
-
-
-</body></html>
+</body>
+</html>
