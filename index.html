@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8,7 +7,6 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f4f0; color: #1a1a18; min-height: 100vh; }
-
   .header { background: #fff; border-bottom: 1px solid #e0dfd8; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; gap: 12px; flex-wrap: wrap; }
   .header-left h1 { font-size: 15px; font-weight: 600; }
   .header-left .cycle { font-size: 12px; color: #888780; margin-top: 2px; }
@@ -18,7 +16,6 @@
   .sync-status { font-size: 11px; color: #aaa; }
   .sync-status.ok { color: #3b6d11; }
   .sync-status.err { color: #a32d2d; }
-
   .layout { display: grid; grid-template-columns: 200px 1fr; min-height: calc(100vh - 57px); }
   .sidebar { background: #fff; border-right: 1px solid #e0dfd8; padding: 16px 0; position: sticky; top: 57px; height: calc(100vh - 57px); overflow-y: auto; }
   .sidebar-section { padding: 8px 16px 4px; font-size: 10px; font-weight: 600; color: #bbb; text-transform: uppercase; letter-spacing: 0.08em; }
@@ -28,69 +25,41 @@
   .nav-badge { float: right; font-size: 10px; padding: 1px 6px; border-radius: 10px; background: #f0efe8; color: #888; margin-left: 4px; }
   .nav-badge.red { background: #fcebeb; color: #a32d2d; }
   .nav-badge.yellow { background: #faeeda; color: #ba7517; }
-
   .main { padding: 24px 28px; max-width: 940px; }
-
   .loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 14px; }
   .loading-spinner { width: 28px; height: 28px; border: 2px solid #e0dfd8; border-top-color: #1a1a18; border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
   .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
   .stat-card { background: #fff; border: 1px solid #e0dfd8; border-radius: 10px; padding: 14px 16px; }
   .stat-label { font-size: 11px; color: #888780; margin-bottom: 4px; }
   .stat-value { font-size: 26px; font-weight: 600; }
-  .stat-value.c-total { color: #1a1a18; }
-  .stat-value.c-green { color: #3b6d11; }
-  .stat-value.c-yellow { color: #ba7517; }
-  .stat-value.c-red { color: #a32d2d; }
-
+  .stat-value.c-total { color: #1a1a18; } .stat-value.c-green { color: #3b6d11; } .stat-value.c-yellow { color: #ba7517; } .stat-value.c-red { color: #a32d2d; }
   .section-title { font-size: 13px; font-weight: 600; color: #1a1a18; margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
   .section-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-
   .goal-card { background: #fff; border: 1px solid #e0dfd8; border-radius: 10px; padding: 13px 15px; margin-bottom: 8px; }
-  .goal-card.risk { border-left: 3px solid #ef9f27; }
-  .goal-card.blocked { border-left: 3px solid #e24b4a; }
-  .goal-card.abandoned { border-left: 3px solid #b4b2a9; }
-  .goal-card.missing { border-left: 3px solid #e24b4a; background: #fffaf9; }
+  .goal-card.risk { border-left: 3px solid #ef9f27; } .goal-card.blocked { border-left: 3px solid #e24b4a; } .goal-card.abandoned { border-left: 3px solid #b4b2a9; } .goal-card.missing { border-left: 3px solid #e24b4a; background: #fffaf9; }
   .goal-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
   .goal-body { flex: 1; min-width: 0; }
   .goal-meta { font-size: 11px; color: #888780; margin-bottom: 3px; }
   .goal-name { font-size: 13px; font-weight: 500; color: #1a1a18; line-height: 1.4; }
   .goal-update { font-size: 12px; color: #555; margin-top: 5px; line-height: 1.5; }
   .goal-no-update { font-size: 12px; color: #a32d2d; margin-top: 4px; font-style: italic; }
-
   .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap; }
-  .badge-green { background: #eaf3de; color: #3b6d11; }
-  .badge-yellow { background: #faeeda; color: #ba7517; }
-  .badge-red { background: #fcebeb; color: #a32d2d; }
-  .badge-done { background: #e1f5ee; color: #0f6e56; }
-  .badge-abandoned { background: #f1efe8; color: #5f5e5a; }
-  .badge-none { background: #f1efe8; color: #888780; }
-
+  .badge-green { background: #eaf3de; color: #3b6d11; } .badge-yellow { background: #faeeda; color: #ba7517; } .badge-red { background: #fcebeb; color: #a32d2d; } .badge-done { background: #e1f5ee; color: #0f6e56; } .badge-abandoned { background: #f1efe8; color: #5f5e5a; } .badge-none { background: #f1efe8; color: #888780; }
   .week-dots { display: flex; gap: 3px; margin-top: 8px; align-items: center; }
   .week-dot { width: 20px; height: 5px; border-radius: 2px; }
-  .wd-green { background: #c0dd97; }
-  .wd-yellow { background: #fac775; }
-  .wd-red { background: #f09595; }
-  .wd-done { background: #9fe1cb; }
-  .wd-abandoned { background: #d3d1c7; }
-  .wd-empty { background: #e8e7e0; }
+  .wd-green { background: #c0dd97; } .wd-yellow { background: #fac775; } .wd-red { background: #f09595; } .wd-done { background: #9fe1cb; } .wd-abandoned { background: #d3d1c7; } .wd-empty { background: #e8e7e0; }
   .week-label { font-size: 10px; color: #bbb; margin-left: 4px; }
-
   .missing-strip { background: #fffaf9; border: 1px solid #f7c1c1; border-radius: 8px; padding: 9px 13px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .missing-owner { font-size: 12px; font-weight: 600; color: #a32d2d; flex-shrink: 0; }
   .missing-goal-text { font-size: 11px; color: #c05050; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
   .team-section { margin-bottom: 22px; }
   .team-label { font-size: 10px; font-weight: 700; color: #bbb; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #e8e7e0; }
-
   .run-btn { padding: 9px 20px; background: #1a1a18; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; }
   .run-btn:hover { opacity: 0.85; }
-
   .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
   .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #888; }
   .legend-dot { width: 20px; height: 5px; border-radius: 2px; }
-
   @media (max-width: 720px) {
     .layout { grid-template-columns: 1fr; }
     .sidebar { position: static; height: auto; display: flex; flex-wrap: wrap; padding: 10px; gap: 4px; border-right: none; border-bottom: 1px solid #e0dfd8; }
@@ -104,7 +73,6 @@
 </style>
 </head>
 <body>
-
 <div class="header">
   <div class="header-left">
     <h1>Goals Dashboard · D&amp;A 2026</h1>
@@ -114,119 +82,108 @@
     <div style="display:flex;align-items:center;gap:6px">
       <label style="font-size:12px;color:#888">Semana:</label>
       <select id="week-selector" onchange="setWeek(this.value)" style="font-size:12px;padding:5px 8px;border-radius:7px;border:1px solid #e0dfd8;background:#fff;cursor:pointer;">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5" selected>5</option>
-        <option value="6">6</option>
+        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+        <option value="4">4</option><option value="5" selected>5</option><option value="6">6</option>
       </select>
     </div>
     <span class="sync-status" id="sync-status"></span>
-    <button class="sync-btn" id="sync-btn" onclick="loadFile()">↻ Carregar planilha</button>
+    <button class="sync-btn" onclick="loadFile()">&#8635; Carregar planilha</button>
   </div>
 </div>
-
 <div class="layout">
   <nav class="sidebar">
     <div class="sidebar-section">Views</div>
-    <button class="nav-btn active" onclick="showTab('overview')">Overview <span class="nav-badge red" id="badge-overview"></span></button>
-    <button class="nav-btn" onclick="showTab('missing')">Sem update <span class="nav-badge red" id="badge-missing"></span></button>
-    <button class="nav-btn" onclick="showTab('risk')">At Risk <span class="nav-badge yellow" id="badge-risk"></span></button>
-    <button class="nav-btn" onclick="showTab('all')">Todos os Goals <span class="nav-badge" id="badge-all"></span></button>
+    <button class="nav-btn active" onclick="showTab('overview')">Overview <span class="nav-badge red" id="b-ov"></span></button>
+    <button class="nav-btn" onclick="showTab('missing')">Sem update <span class="nav-badge red" id="b-ms"></span></button>
+    <button class="nav-btn" onclick="showTab('risk')">At Risk <span class="nav-badge yellow" id="b-rk"></span></button>
+    <button class="nav-btn" onclick="showTab('all')">Todos os Goals <span class="nav-badge" id="b-al"></span></button>
   </nav>
-
   <main class="main">
-    <div id="tab-overview">
+    <div id="t-overview">
       <div class="loading-screen">
-        <div style="font-size:32px">📊</div>
-        <div style="font-size:15px;font-weight:600">Goals Dashboard · D&amp;A</div>
-        <div style="font-size:13px;color:#888;text-align:center;max-width:320px;line-height:1.7">
+        <div style="font-size:32px">&#128202;</div>
+        <div style="font-size:15px;font-weight:600">Goals Dashboard &middot; D&amp;A</div>
+        <div style="font-size:13px;color:#888;text-align:center;max-width:300px;line-height:1.7">
           Para começar, exporte a planilha no Google Sheets:<br>
-          <strong>Arquivo → Fazer download → CSV</strong><br>
-          e clique em "Carregar planilha" acima.
+          <strong>Arquivo &rarr; Fazer download &rarr; CSV</strong><br>
+          e clique em "Carregar planilha".
         </div>
-        <button class="run-btn" onclick="loadFile()">↻ Carregar planilha</button>
+        <button class="run-btn" onclick="loadFile()">&#8635; Carregar planilha</button>
       </div>
     </div>
-    <div id="tab-missing" style="display:none"></div>
-    <div id="tab-risk" style="display:none"></div>
-    <div id="tab-all" style="display:none"></div>
+    <div id="t-missing" style="display:none"></div>
+    <div id="t-risk" style="display:none"></div>
+    <div id="t-all" style="display:none"></div>
   </main>
 </div>
-
 <script>
-// ── STATE ──────────────────────────────────────────────────────────────────
-let DATA = [];
-let CURRENT_WEEK = 5;
-let CYCLE_NAME   = 'Q2-C1';
+var DATA = [], CW = 5, CYCLE = 'Q2-C1';
+var FILL = ['','-','arthur to update','leandro to update','oncall','on call','to be defined','to update'];
 
-// ── FILE LOADER ────────────────────────────────────────────────────────────
 function loadFile() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.csv,.xlsx';
-  input.onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const btn    = document.getElementById('sync-btn');
-    const status = document.getElementById('sync-status');
-    btn.disabled = true;
-    status.className = 'sync-status';
-    status.textContent = '';
-
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.csv,.xlsx';
+  inp.onchange = function(e) {
+    var f = e.target.files[0]; if (!f) return;
+    document.getElementById('sync-status').textContent = '';
     resetTabs();
-    document.getElementById('tab-overview').style.display = 'block';
-    document.getElementById('tab-overview').innerHTML =
-      '<div class="loading-screen"><div class="loading-spinner"></div><div style="font-size:13px;color:#888">Lendo arquivo…</div></div>';
-    document.getElementById('tab-overview').dataset.rendered = '1';
-
-    try {
-      let csv;
-      if (file.name.endsWith('.csv')) {
-        csv = await file.text();
-      } else {
-        const ab = await file.arrayBuffer();
-        const XLSX = await loadXLSX();
-        const wb = XLSX.read(ab, {type:'array'});
-        const sheetName = wb.SheetNames.find(n => n.replace(/\s/g,'').toUpperCase().includes('Q2C1')) || wb.SheetNames[0];
-        csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
-      }
-      parseCSV(csv);
-      const now = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-      status.textContent = 'Atualizado às ' + now;
-      status.className = 'sync-status ok';
-      document.getElementById('cycle-label').textContent = CYCLE_NAME + ' · Semana ' + CURRENT_WEEK + ' de 6';
-      updateBadges();
-      resetTabs();
-      showTab('overview');
-    } catch(e) {
-      status.textContent = 'Erro ao ler arquivo';
-      status.className = 'sync-status err';
-      document.getElementById('tab-overview').innerHTML =
-        '<div class="loading-screen"><div style="color:#a32d2d;font-size:13px">Erro: ' + e.message + '</div></div>';
-    }
-    btn.disabled = false;
+    var ov = document.getElementById('t-overview');
+    ov.style.display = 'block';
+    ov.innerHTML = '<div class="loading-screen"><div class="loading-spinner"></div><div style="font-size:13px;color:#888">Lendo arquivo...</div></div>';
+    ov.dataset.r = '1';
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        if (f.name.endsWith('.xlsx')) {
+          loadXLSX(function(XL) {
+            var wb = XL.read(ev.target.result, {type:'array'});
+            var sn = wb.SheetNames[0];
+            for (var i = 0; i < wb.SheetNames.length; i++) {
+              if (wb.SheetNames[i].replace(/\s/g,'').toUpperCase().indexOf('Q2C1') >= 0) { sn = wb.SheetNames[i]; break; }
+            }
+            processCSV(XL.utils.sheet_to_csv(wb.Sheets[sn]), f.name);
+          });
+        } else {
+          processCSV(ev.target.result, f.name);
+        }
+      } catch(err) { showErr(err.message); }
+    };
+    if (f.name.endsWith('.xlsx')) reader.readAsArrayBuffer(f);
+    else reader.readAsText(f);
   };
-  input.click();
+  inp.click();
 }
 
-async function loadXLSX() {
-  if (window.XLSX) return window.XLSX;
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    s.onload = () => resolve(window.XLSX);
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
+function loadXLSX(cb) {
+  if (window.XLSX) { cb(window.XLSX); return; }
+  var s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload = function() { cb(window.XLSX); };
+  document.head.appendChild(s);
 }
 
-// ── CSV PARSER ─────────────────────────────────────────────────────────────
-function parseRow(line) {
-  const cols = []; let cur = '', inQ = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
+function processCSV(csv, fname) {
+  try {
+    parseCSV(csv);
+    var now = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    var st = document.getElementById('sync-status');
+    st.textContent = 'Atualizado às ' + now;
+    st.className = 'sync-status ok';
+    document.getElementById('cycle-label').textContent = CYCLE + ' · Semana ' + CW + ' de 6';
+    updateBadges(); resetTabs(); showTab('overview');
+  } catch(err) { showErr(err.message); }
+}
+
+function showErr(msg) {
+  document.getElementById('sync-status').textContent = 'Erro ao ler arquivo';
+  document.getElementById('sync-status').className = 'sync-status err';
+  document.getElementById('t-overview').innerHTML = '<div class="loading-screen"><div style="color:#a32d2d;font-size:13px">Erro: ' + msg + '</div></div>';
+}
+
+function pRow(line) {
+  var cols = [], cur = '', inQ = false;
+  for (var i = 0; i < line.length; i++) {
+    var c = line[i];
     if (c === '"') { inQ = !inQ; continue; }
     if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
     cur += c;
@@ -236,211 +193,134 @@ function parseRow(line) {
 }
 
 function parseCSV(csv) {
-  const lines = csv.split('\n').filter(l => l.trim());
-  const headers = parseRow(lines[0]).map(h => h.toLowerCase().trim());
-
-  const ci = name => headers.findIndex(h => h.includes(name));
-  const iOwner    = ci('owner');
-  const iTeam     = ci('team');
-  const iGoal     = ci('goal');
-  const iOutput   = ci('output');
-  const iPriority = ci('priority');
-  const iCurrent  = ci('current');
-
-  function findWeekCols(w) {
-    const s = headers.findIndex(h => h === 'w'+w+' status' || h === 'w'+w+'status' || (h.includes('w'+w) && h.includes('status')));
-    const u = headers.findIndex(h => h === 'w'+w+' update' || h === 'w'+w+'update' || (h.includes('w'+w) && h.includes('update')));
-    return {s, u};
-  }
-  const weekCols = [1,2,3,4,5,6].map(w => findWeekCols(w));
-
-  DATA = [];
-  for (let r = 1; r < lines.length; r++) {
-    const row = parseRow(lines[r]);
-    if (!row[iGoal] || !row[iOwner]) continue;
-    const goal = {
-      owner:    row[iOwner]    || '',
-      team:     row[iTeam]     || '',
-      goal:     row[iGoal]     || '',
-      output:   iOutput   >= 0 ? (row[iOutput]   || '') : '',
-      priority: iPriority >= 0 ? (row[iPriority] || '') : '',
-      current:  iCurrent  >= 0 ? (row[iCurrent]  || '') : '',
+  var lines = csv.split('\n').filter(function(l){return l.trim();});
+  var hdr = pRow(lines[0]).map(function(h){return h.toLowerCase().trim();});
+  function ci(n) { return hdr.findIndex(function(h){return h.includes(n);}); }
+  var iO=ci('owner'),iT=ci('team'),iG=ci('goal'),iOut=ci('output'),iP=ci('priority'),iC=ci('current');
+  var wc = [1,2,3,4,5,6].map(function(w) {
+    return {
+      s: hdr.findIndex(function(h){return h==='w'+w+' status'||h==='w'+w+'status'||(h.includes('w'+w)&&h.includes('status'));}),
+      u: hdr.findIndex(function(h){return h==='w'+w+' update'||h==='w'+w+'update'||(h.includes('w'+w)&&h.includes('update'));})
     };
-    for (let w = 1; w <= 6; w++) {
-      const wc = weekCols[w-1];
-      goal['w'+w] = {
-        s: wc.s >= 0 ? (row[wc.s] || '').trim() : '',
-        u: wc.u >= 0 ? (row[wc.u] || '').trim() : ''
-      };
+  });
+  DATA = [];
+  for (var r = 1; r < lines.length; r++) {
+    var row = pRow(lines[r]);
+    if (!row[iG] || !row[iO]) continue;
+    var g = { owner:row[iO]||'', team:row[iT]||'', goal:row[iG]||'', output:iOut>=0?(row[iOut]||''):'', priority:iP>=0?(row[iP]||''):'', current:iC>=0?(row[iC]||''):'' };
+    for (var w = 1; w <= 6; w++) {
+      var c = wc[w-1];
+      g['w'+w] = { s:c.s>=0?(row[c.s]||'').trim():'', u:c.u>=0?(row[c.u]||'').trim():'' };
     }
-    DATA.push(goal);
+    DATA.push(g);
   }
-  CURRENT_WEEK = parseInt(document.getElementById('week-selector').value) || 5;
+  CW = parseInt(document.getElementById('week-selector').value) || 5;
 }
 
-// ── HELPERS ────────────────────────────────────────────────────────────────
-const STATUS_CFG = {
-  'Green':      {badge:'badge-green',    dot:'wd-green',    label:'On track'},
-  'Yellow':     {badge:'badge-yellow',   dot:'wd-yellow',   label:'At risk'},
-  'Red':        {badge:'badge-red',      dot:'wd-red',      label:'Blocked'},
-  'Done':       {badge:'badge-done',     dot:'wd-done',     label:'Done'},
-  'Abandoned':  {badge:'badge-abandoned',dot:'wd-abandoned',label:'Abandoned'},
-  'Not started':{badge:'badge-none',     dot:'wd-empty',    label:'Not started'},
-  '':           {badge:'badge-none',     dot:'wd-empty',    label:'Sem update'},
-};
-const FILLER = ['','-','arthur to update','leandro to update','oncall','on call','to be defined','to update'];
-const getW      = (g,n) => g['w'+n] || {s:'',u:''};
-const isMissing = g => { const w = getW(g,CURRENT_WEEK); return !w.u || FILLER.includes(w.u.toLowerCase()); };
-const isRisk    = g => ['Yellow','Red','Abandoned'].includes(g.current) ||
-                       (g.current==='Not started' && !getW(g,3).u && !getW(g,2).u && !getW(g,1).u);
-const getMissing = () => DATA.filter(isMissing);
-const getAtRisk  = () => DATA.filter(isRisk);
-const getOnTrack = () => DATA.filter(g => ['Green','Done'].includes(g.current));
+var SCFG = {'Green':{badge:'badge-green',dot:'wd-green',label:'On track'},'Yellow':{badge:'badge-yellow',dot:'wd-yellow',label:'At risk'},'Red':{badge:'badge-red',dot:'wd-red',label:'Blocked'},'Done':{badge:'badge-done',dot:'wd-done',label:'Done'},'Abandoned':{badge:'badge-abandoned',dot:'wd-abandoned',label:'Abandoned'},'Not started':{badge:'badge-none',dot:'wd-empty',label:'Not started'},'':{badge:'badge-none',dot:'wd-empty',label:'Sem update'}};
 
-function badge(status) {
-  const c = STATUS_CFG[status] || STATUS_CFG[''];
-  return '<span class="badge ' + c.badge + '">' + c.label + '</span>';
-}
+function gW(g,n) { return g['w'+n]||{s:'',u:''}; }
+function isMiss(g) { var w=gW(g,CW); return !w.u||FILL.indexOf(w.u.toLowerCase())>=0; }
+function isRisk(g) { return ['Yellow','Red','Abandoned'].indexOf(g.current)>=0||(g.current==='Not started'&&!gW(g,3).u&&!gW(g,2).u&&!gW(g,1).u); }
+function getMiss() { return DATA.filter(isMiss); }
+function getRisk() { return DATA.filter(isRisk); }
+function getGood() { return DATA.filter(function(g){return ['Green','Done'].indexOf(g.current)>=0;}); }
 
-function weekDots(g) {
-  let h = '<div class="week-dots">';
-  for (let i = 1; i <= 6; i++) {
-    const s = getW(g,i).s;
-    const c = (STATUS_CFG[s] || STATUS_CFG['']).dot;
-    const outline = i === CURRENT_WEEK ? ' style="outline:2px solid #999;outline-offset:1px"' : '';
-    h += '<div class="week-dot ' + c + '"' + outline + ' title="S' + i + ': ' + (s||'sem status') + '"></div>';
+function bdg(s) { var c=SCFG[s]||SCFG['']; return '<span class="badge '+c.badge+'">'+c.label+'</span>'; }
+
+function wdots(g) {
+  var h = '<div class="week-dots">';
+  for (var i=1;i<=6;i++) {
+    var s=gW(g,i).s, c=(SCFG[s]||SCFG['']).dot, ol=i===CW?' style="outline:2px solid #999;outline-offset:1px"':'';
+    h+='<div class="week-dot '+c+'"'+ol+' title="S'+i+': '+(s||'?')+'"></div>';
   }
-  return h + '<span class="week-label">S1–S6</span></div>';
+  return h+'<span class="week-label">S1-S6</span></div>';
 }
 
-function goalCard(g, extraClass) {
-  extraClass = extraClass || '';
-  const w = getW(g, CURRENT_WEEK);
-  const miss = isMissing(g);
-  const updateHtml = miss
-    ? '<div class="goal-no-update">Sem update na semana ' + CURRENT_WEEK + '</div>'
-    : w.u ? '<div class="goal-update">' + w.u.slice(0,280) + (w.u.length>280?'…':'') + '</div>' : '';
-
-  return '<div class="goal-card ' + extraClass + '">' +
-    '<div class="goal-row">' +
-      '<div class="goal-body">' +
-        '<div class="goal-meta">' + g.owner + (g.team?' · '+g.team:'') + (g.priority?' · '+g.priority:'') + '</div>' +
-        '<div class="goal-name">' + g.goal + '</div>' +
-        updateHtml +
-      '</div>' +
-      '<div style="flex-shrink:0">' + badge(g.current) + '</div>' +
-    '</div>' +
-    weekDots(g) +
-  '</div>';
+function goalCard(g, cls) {
+  cls = cls||'';
+  var w=gW(g,CW), miss=isMiss(g);
+  var upd = miss ? '<div class="goal-no-update">Sem update na semana '+CW+'</div>' : (w.u?'<div class="goal-update">'+w.u.slice(0,280)+(w.u.length>280?'...':'')+'</div>':'');
+  return '<div class="goal-card '+cls+'"><div class="goal-row"><div class="goal-body"><div class="goal-meta">'+g.owner+(g.team?' &middot; '+g.team:'')+(g.priority?' &middot; '+g.priority:'')+'</div><div class="goal-name">'+g.goal+'</div>'+upd+'</div><div style="flex-shrink:0">'+bdg(g.current)+'</div></div>'+wdots(g)+'</div>';
 }
 
-// ── WEEK SELECTOR ──────────────────────────────────────────────────────────
 function setWeek(w) {
-  CURRENT_WEEK = parseInt(w);
+  CW = parseInt(w);
   if (!DATA.length) return;
-  document.getElementById('cycle-label').textContent = CYCLE_NAME + ' · Semana ' + CURRENT_WEEK + ' de 6';
-  resetTabs();
-  updateBadges();
-  showTab('overview');
+  document.getElementById('cycle-label').textContent = CYCLE + ' · Semana ' + CW + ' de 6';
+  resetTabs(); updateBadges(); showTab('overview');
 }
 
-// ── RENDERERS ──────────────────────────────────────────────────────────────
-function renderOverview() {
-  const missing = getMissing(), atRisk = getAtRisk(), onTrack = getOnTrack();
-
-  let h = '<div class="legend">' +
-    '<div class="legend-item"><div class="legend-dot wd-green"></div>On track</div>' +
-    '<div class="legend-item"><div class="legend-dot wd-yellow"></div>At risk</div>' +
-    '<div class="legend-item"><div class="legend-dot wd-red"></div>Blocked</div>' +
-    '<div class="legend-item"><div class="legend-dot wd-done"></div>Done</div>' +
-    '<div class="legend-item"><div class="legend-dot wd-empty"></div>Sem status</div>' +
-  '</div>';
-
-  h += '<div class="stats-grid">' +
-    '<div class="stat-card"><div class="stat-label">Total goals</div><div class="stat-value c-total">' + DATA.length + '</div></div>' +
-    '<div class="stat-card"><div class="stat-label">On track</div><div class="stat-value c-green">' + onTrack.length + '</div></div>' +
-    '<div class="stat-card"><div class="stat-label">At risk</div><div class="stat-value c-yellow">' + atRisk.length + '</div></div>' +
-    '<div class="stat-card"><div class="stat-label">Sem update S' + CURRENT_WEEK + '</div><div class="stat-value c-red">' + missing.length + '</div></div>' +
-  '</div>';
-
-  if (missing.length > 0) {
-    h += '<div class="section-title"><span class="section-dot" style="background:#e24b4a"></span>Sem update na semana ' + CURRENT_WEEK + '</div>';
-    missing.forEach(g => {
-      h += '<div class="missing-strip"><span class="missing-owner">' + g.owner + '</span><span class="missing-goal-text">' + g.goal.slice(0,90) + (g.goal.length>90?'…':'') + '</span></div>';
-    });
-    h += '<div style="height:20px"></div>';
+function rOverview() {
+  var miss=getMiss(), risk=getRisk(), good=getGood();
+  var h = '<div class="legend"><div class="legend-item"><div class="legend-dot wd-green"></div>On track</div><div class="legend-item"><div class="legend-dot wd-yellow"></div>At risk</div><div class="legend-item"><div class="legend-dot wd-red"></div>Blocked</div><div class="legend-item"><div class="legend-dot wd-done"></div>Done</div><div class="legend-item"><div class="legend-dot wd-empty"></div>Sem status</div></div>';
+  h += '<div class="stats-grid"><div class="stat-card"><div class="stat-label">Total goals</div><div class="stat-value c-total">'+DATA.length+'</div></div><div class="stat-card"><div class="stat-label">On track</div><div class="stat-value c-green">'+good.length+'</div></div><div class="stat-card"><div class="stat-label">At risk</div><div class="stat-value c-yellow">'+risk.length+'</div></div><div class="stat-card"><div class="stat-label">Sem update S'+CW+'</div><div class="stat-value c-red">'+miss.length+'</div></div></div>';
+  if (miss.length) {
+    h += '<div class="section-title"><span class="section-dot" style="background:#e24b4a"></span>Sem update na semana '+CW+'</div>';
+    miss.forEach(function(g){ h+='<div class="missing-strip"><span class="missing-owner">'+g.owner+'</span><span class="missing-goal-text">'+g.goal.slice(0,90)+(g.goal.length>90?'...':'')+'</span></div>'; });
+    h += '<div style="height:16px"></div>';
   }
-
-  if (atRisk.length > 0) {
+  if (risk.length) {
     h += '<div class="section-title"><span class="section-dot" style="background:#ef9f27"></span>At risk</div>';
-    atRisk.forEach(g => h += goalCard(g, g.current==='Abandoned'?'abandoned':g.current==='Red'?'blocked':'risk'));
+    risk.forEach(function(g){ h+=goalCard(g,g.current==='Abandoned'?'abandoned':g.current==='Red'?'blocked':'risk'); });
   }
   return h;
 }
 
-function renderMissing() {
-  const missing = getMissing();
-  let h = '<p style="font-size:13px;color:#888;margin-bottom:14px">' + missing.length + ' goals sem update na semana ' + CURRENT_WEEK + '</p>';
-  missing.forEach(g => h += goalCard(g, 'missing'));
+function rMissing() {
+  var miss=getMiss(), h='<p style="font-size:13px;color:#888;margin-bottom:14px">'+miss.length+' goals sem update na semana '+CW+'</p>';
+  miss.forEach(function(g){h+=goalCard(g,'missing');});
   return h;
 }
 
-function renderRisk() {
-  const atRisk = getAtRisk();
-  let h = '<p style="font-size:13px;color:#888;margin-bottom:14px">' + atRisk.length + ' goals com status Yellow/Red/Abandoned ou estagnados</p>';
-  atRisk.forEach(g => h += goalCard(g, g.current==='Abandoned'?'abandoned':g.current==='Red'?'blocked':'risk'));
+function rRisk() {
+  var risk=getRisk(), h='<p style="font-size:13px;color:#888;margin-bottom:14px">'+risk.length+' goals com status Yellow/Red/Abandoned ou estagnados</p>';
+  risk.forEach(function(g){h+=goalCard(g,g.current==='Abandoned'?'abandoned':g.current==='Red'?'blocked':'risk');});
   return h;
 }
 
-function renderAll() {
-  const teams = [...new Set(DATA.map(g => g.team))].filter(Boolean);
-  let h = '';
-  teams.forEach(team => {
-    const goals = DATA.filter(g => g.team === team);
-    if (!goals.length) return;
-    h += '<div class="team-section"><div class="team-label">' + team + '</div>';
-    goals.forEach(g => h += goalCard(g, isMissing(g)?'missing':''));
-    h += '</div>';
+function rAll() {
+  var teams=[],h='';
+  DATA.forEach(function(g){if(g.team&&teams.indexOf(g.team)<0)teams.push(g.team);});
+  teams.forEach(function(t){
+    var gs=DATA.filter(function(g){return g.team===t;});
+    if(!gs.length)return;
+    h+='<div class="team-section"><div class="team-label">'+t+'</div>';
+    gs.forEach(function(g){h+=goalCard(g,isMiss(g)?'missing':'');});
+    h+='</div>';
   });
   return h;
 }
 
-// ── NAVIGATION ─────────────────────────────────────────────────────────────
 function resetTabs() {
-  ['overview','missing','risk','all'].forEach(t => {
-    const el = document.getElementById('tab-' + t);
-    el.dataset.rendered = '';
-    el.innerHTML = '';
+  ['overview','missing','risk','all'].forEach(function(t){
+    var el=document.getElementById('t-'+t); el.dataset.r=''; el.innerHTML='';
   });
 }
 
 function showTab(name) {
-  ['overview','missing','risk','all'].forEach(t => {
-    document.getElementById('tab-' + t).style.display = t === name ? 'block' : 'none';
+  ['overview','missing','risk','all'].forEach(function(t){
+    document.getElementById('t-'+t).style.display=t===name?'block':'none';
   });
-  document.querySelectorAll('.nav-btn').forEach(b => {
-    const txt = b.textContent.trim();
-    const active =
-      (name==='overview' && txt.startsWith('Overview')) ||
-      (name==='missing'  && txt.startsWith('Sem'))      ||
-      (name==='risk'     && txt.startsWith('At'))        ||
-      (name==='all'      && txt.startsWith('Todos'));
-    b.classList.toggle('active', active);
+  document.querySelectorAll('.nav-btn').forEach(function(b){
+    var txt=b.textContent.trim();
+    var on=(name==='overview'&&txt.indexOf('Overview')===0)||(name==='missing'&&txt.indexOf('Sem')===0)||(name==='risk'&&txt.indexOf('At')===0)||(name==='all'&&txt.indexOf('Todos')===0);
+    b.classList.toggle('active',on);
   });
-  const el = document.getElementById('tab-' + name);
-  if (el.dataset.rendered) return;
-  el.dataset.rendered = '1';
-  if      (name==='overview') el.innerHTML = renderOverview();
-  else if (name==='missing')  el.innerHTML = renderMissing();
-  else if (name==='risk')     el.innerHTML = renderRisk();
-  else if (name==='all')      el.innerHTML = renderAll();
+  var el=document.getElementById('t-'+name);
+  if(el.dataset.r)return;
+  el.dataset.r='1';
+  if(name==='overview')el.innerHTML=rOverview();
+  else if(name==='missing')el.innerHTML=rMissing();
+  else if(name==='risk')el.innerHTML=rRisk();
+  else if(name==='all')el.innerHTML=rAll();
 }
 
 function updateBadges() {
-  document.getElementById('badge-overview').textContent = getMissing().length;
-  document.getElementById('badge-missing').textContent  = getMissing().length;
-  document.getElementById('badge-risk').textContent     = getAtRisk().length;
-  document.getElementById('badge-all').textContent      = DATA.length;
+  document.getElementById('b-ov').textContent=getMiss().length;
+  document.getElementById('b-ms').textContent=getMiss().length;
+  document.getElementById('b-rk').textContent=getRisk().length;
+  document.getElementById('b-al').textContent=DATA.length;
 }
 </script>
 </body>
