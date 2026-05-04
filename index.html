@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Goals Dashboard · D&A 2026</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -16,488 +17,241 @@
       --text: #1e293b;
       --text-muted: #64748b;
       --text-subtle: #94a3b8;
-
-      --green: #16a34a;
-      --green-bg: #dcfce7;
-      --yellow: #a16207;
-      --yellow-bg: #fef9c3;
-      --red: #dc2626;
-      --red-bg: #fee2e2;
-      --teal: #0d9488;
-      --teal-bg: #ccfbf1;
-      --purple: #7e22ce;
-      --purple-bg: #f3e8ff;
-      --gray: #4b5563;
-      --gray-bg: #f3f4f6;
-
+      --green: #16a34a; --green-bg: #dcfce7;
+      --yellow: #a16207; --yellow-bg: #fef9c3;
+      --red: #dc2626; --red-bg: #fee2e2;
+      --teal: #0d9488; --teal-bg: #ccfbf1;
+      --purple: #7e22ce; --purple-bg: #f3e8ff;
+      --gray: #4b5563; --gray-bg: #f3f4f6;
       --header-height: 58px;
       --sidebar-width: 196px;
     }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
     /* ── Header ── */
-    .header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      height: var(--header-height);
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      gap: 12px;
-    }
-
+    .header { position: sticky; top: 0; z-index: 100; height: var(--header-height); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 12px; }
     .header-title { font-size: 15px; font-weight: 700; white-space: nowrap; }
-
     .header-divider { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
-
     .header-cycle { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
-
     .header-spacer { flex: 1; }
-
-    .h-selector {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-
-    .h-selector select {
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 13px;
-      background: var(--surface);
-      color: var(--text);
-      cursor: pointer;
-      outline: none;
-      max-width: 160px;
-    }
-
+    .h-selector { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+    .h-selector select { border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 13px; background: var(--surface); color: var(--text); cursor: pointer; outline: none; max-width: 160px; }
     .h-selector select:focus { border-color: #93c5fd; }
-
-    .upload-btn {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 6px 13px;
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
-    }
-
+    .upload-btn { display: flex; align-items: center; gap: 5px; padding: 6px 13px; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background .15s; }
     .upload-btn:hover { background: #1d4ed8; }
-
+    .api-key-btn { display: flex; align-items: center; gap: 5px; padding: 6px 11px; background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; cursor: pointer; white-space: nowrap; transition: all .15s; }
+    .api-key-btn:hover { border-color: #9333ea; color: #9333ea; }
+    .api-key-btn.configured { border-color: #86efac; color: var(--green); }
     .last-updated { font-size: 11px; color: var(--text-subtle); white-space: nowrap; }
 
     /* ── Layout ── */
-    .layout { display: flex; min-height: calc(100vh - var(--header-height)); }
+    .layout { display: flex; align-items: flex-start; min-height: calc(100vh - var(--header-height)); }
 
     /* ── Sidebar ── */
-    .sidebar {
-      width: var(--sidebar-width);
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      padding: 12px 0;
-      flex-shrink: 0;
-      position: sticky;
-      top: var(--header-height);
-      height: calc(100vh - var(--header-height));
-      overflow-y: auto;
-    }
-
-    .sidebar-tab {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 16px;
-      cursor: pointer;
-      font-size: 13.5px;
-      color: var(--text-muted);
-      border-left: 3px solid transparent;
-      transition: all 0.12s;
-      user-select: none;
-    }
-
+    .sidebar { width: var(--sidebar-width); background: var(--surface); border-right: 1px solid var(--border); padding: 12px 0; flex-shrink: 0; position: sticky; top: var(--header-height); max-height: calc(100vh - var(--header-height)); overflow-y: auto; }
+    .sidebar-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-subtle); padding: 14px 16px 4px; }
+    .sidebar-tab { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; cursor: pointer; font-size: 13.5px; color: var(--text-muted); border-left: 3px solid transparent; transition: all .12s; user-select: none; }
     .sidebar-tab:hover { background: var(--bg); color: var(--text); }
-
-    .sidebar-tab.active {
-      background: #eff6ff;
-      color: #1d4ed8;
-      border-left-color: #2563eb;
-      font-weight: 600;
-    }
-
-    .tab-badge {
-      font-size: 11px;
-      background: var(--gray-bg);
-      color: var(--gray);
-      padding: 1px 7px;
-      border-radius: 10px;
-      font-weight: 600;
-      min-width: 24px;
-      text-align: center;
-    }
-
+    .sidebar-tab.active { background: #eff6ff; color: #1d4ed8; border-left-color: #2563eb; font-weight: 600; }
+    .sidebar-tab.marcela-tab { color: #9333ea; }
+    .sidebar-tab.marcela-tab:hover { background: #faf5ff; color: var(--purple); }
+    .sidebar-tab.marcela-tab.active { background: #faf5ff; color: var(--purple); border-left-color: #9333ea; }
+    .sidebar-tab.marcela-tab.active .tab-badge { background: #e9d5ff; color: var(--purple); }
+    .tab-badge { font-size: 11px; background: var(--gray-bg); color: var(--gray); padding: 1px 7px; border-radius: 10px; font-weight: 600; min-width: 24px; text-align: center; }
     .sidebar-tab.active .tab-badge { background: #dbeafe; color: #1d4ed8; }
 
     /* ── Main ── */
-    .main { flex: 1; padding: 24px 28px; overflow: auto; }
+    .main { flex: 1; padding: 24px 28px; min-width: 0; }
 
     /* ── Welcome ── */
-    .welcome {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 440px;
-      text-align: center;
-      gap: 14px;
-    }
-
+    .welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 440px; text-align: center; gap: 14px; }
     .welcome-icon { font-size: 52px; }
     .welcome h2 { font-size: 22px; font-weight: 700; }
     .welcome p { color: var(--text-muted); max-width: 380px; line-height: 1.65; font-size: 14px; }
-
-    .welcome-upload-btn {
-      padding: 11px 26px;
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 6px;
-      transition: background 0.15s;
-    }
-
+    .welcome-upload-btn { padding: 11px 26px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 6px; transition: background .15s; }
     .welcome-upload-btn:hover { background: #1d4ed8; }
     .welcome-formats { font-size: 12px; color: var(--text-subtle); }
 
     /* ── Stats row ── */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 28px;
-    }
-
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px 18px;
-    }
-
-    .stat-label {
-      font-size: 11px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 6px;
-      font-weight: 500;
-    }
-
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; }
+    .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; font-weight: 500; }
     .stat-value { font-size: 30px; font-weight: 700; color: var(--text); }
     .stat-card.s-on-track .stat-value { color: var(--green); }
     .stat-card.s-at-risk .stat-value { color: var(--red); }
     .stat-card.s-sem-update .stat-value { color: #d97706; }
 
     /* ── Team breakdown ── */
-    .team-breakdown {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-      margin-bottom: 8px;
-    }
-
-    .tb-header {
-      display: grid;
-      grid-template-columns: 1fr 60px 90px 75px 70px 60px 95px;
-      padding: 8px 16px;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-subtle);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      gap: 8px;
-    }
-
-    .tb-row {
-      display: grid;
-      grid-template-columns: 1fr 60px 90px 75px 70px 60px 95px;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border);
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-    }
-
+    .team-breakdown { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
+    .tb-header { display: grid; grid-template-columns: 1fr 60px 90px 75px 70px 60px 95px; padding: 8px 16px; background: var(--bg); border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 600; color: var(--text-subtle); text-transform: uppercase; letter-spacing: .05em; gap: 8px; }
+    .tb-row { display: grid; grid-template-columns: 1fr 60px 90px 75px 70px 60px 95px; padding: 10px 16px; border-bottom: 1px solid var(--border); align-items: center; gap: 8px; font-size: 13px; }
     .tb-row:last-child { border-bottom: none; }
     .tb-row:hover { background: var(--bg); }
-
     .tb-team { font-weight: 600; }
     .tb-total { color: var(--text-muted); font-size: 13px; font-weight: 600; }
-
-    .tb-pill {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 9px;
-      border-radius: 10px;
-      white-space: nowrap;
-      display: inline-block;
-    }
-
-    .tp-on-track  { background: var(--green-bg); color: var(--green); }
-    .tp-at-risk   { background: var(--yellow-bg); color: var(--yellow); }
-    .tp-blocked   { background: var(--red-bg); color: var(--red); }
-    .tp-done      { background: var(--teal-bg); color: var(--teal); }
-    .tp-sem-update{ background: #fef9c3; color: #92400e; }
-    .tp-zero      { color: var(--text-subtle); font-size: 12px; padding-left: 9px; }
+    .tb-pill { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 10px; white-space: nowrap; display: inline-block; }
+    .tp-on-track { background: var(--green-bg); color: var(--green); }
+    .tp-at-risk { background: var(--yellow-bg); color: var(--yellow); }
+    .tp-blocked { background: var(--red-bg); color: var(--red); }
+    .tp-done { background: var(--teal-bg); color: var(--teal); }
+    .tp-sem-update { background: #fef9c3; color: #92400e; }
+    .tp-zero { color: var(--text-subtle); font-size: 12px; padding-left: 9px; }
 
     /* ── Section headers ── */
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 14px;
-      margin-top: 28px;
-    }
-
+    .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; margin-top: 28px; }
     .section-header:first-child { margin-top: 0; }
     .section-title { font-size: 15px; font-weight: 700; }
     .section-count { font-size: 13px; color: var(--text-muted); }
-
     hr.divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 
     /* ── Count breakdown ── */
-    .count-breakdown {
-      font-size: 13.5px;
-      color: var(--text-muted);
-      margin-bottom: 22px;
-      padding: 12px 16px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-    }
+    .count-breakdown { font-size: 13.5px; color: var(--text-muted); margin-bottom: 22px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
 
-    /* ── Team section (Team → Owner grouping) ── */
+    /* ── Team → Owner grouping ── */
     .team-section { margin-bottom: 32px; }
-
-    .team-section-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px 8px 0 0;
-      border-bottom: none;
-    }
-
-    .team-section-name {
-      font-size: 13px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-    }
-
-    .team-section-count {
-      font-size: 12px;
-      color: var(--text-subtle);
-    }
-
-    .team-section-body {
-      border: 1px solid var(--border);
-      border-radius: 0 0 8px 8px;
-      padding: 16px;
-      background: var(--surface);
-    }
-
-    /* ── Owner group ── */
+    .team-section-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px 8px 0 0; border-bottom: none; }
+    .team-section-name { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); }
+    .team-section-count { font-size: 12px; color: var(--text-subtle); }
+    .team-section-body { border: 1px solid var(--border); border-radius: 0 0 8px 8px; padding: 16px; background: var(--surface); }
     .owner-group { margin-bottom: 20px; }
     .owner-group:last-child { margin-bottom: 0; }
-
-    .owner-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .owner-avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 700;
-      color: white;
-      flex-shrink: 0;
-    }
-
+    .owner-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .owner-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
     .owner-name { font-size: 14px; font-weight: 700; }
     .owner-mini-badges { display: flex; gap: 5px; margin-left: auto; }
-
-    .mini-badge {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-weight: 600;
-    }
-
+    .mini-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
     .mini-badge.mu { background: #fef9c3; color: #92400e; }
     .mini-badge.ar { background: var(--red-bg); color: var(--red); }
 
     /* ── Cards grid ── */
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-      gap: 10px;
-    }
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 10px; }
 
     /* ── Goal card ── */
-    .goal-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-left: 4px solid var(--border);
-      border-radius: 8px;
-      padding: 13px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-    }
-
-    .goal-card.c-missing       { border-left-color: var(--red); }
-    .goal-card.c-not-started   { border-left-color: #9333ea; }
-    .goal-card.c-never-updated { border-left-color: #9ca3af; }
-    .goal-card.c-on-track      { border-left-color: var(--green); }
-    .goal-card.c-at-risk       { border-left-color: #eab308; }
-    .goal-card.c-blocked       { border-left-color: var(--red); }
-    .goal-card.c-done          { border-left-color: var(--teal); }
-    .goal-card.c-abandoned     { border-left-color: #9ca3af; }
-
-    .card-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
+    .goal-card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: 8px; padding: 13px 14px; display: flex; flex-direction: column; gap: 9px; }
+    .goal-card.c-missing      { border-left-color: var(--red); }
+    .goal-card.c-not-started  { border-left-color: #9333ea; }
+    .goal-card.c-never-updated{ border-left-color: #9ca3af; }
+    .goal-card.c-on-track     { border-left-color: var(--green); }
+    .goal-card.c-at-risk      { border-left-color: #eab308; }
+    .goal-card.c-blocked      { border-left-color: var(--red); }
+    .goal-card.c-done         { border-left-color: var(--teal); }
+    .goal-card.c-abandoned    { border-left-color: #9ca3af; }
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
     .card-goal-name { font-size: 13.5px; font-weight: 600; line-height: 1.45; flex: 1; }
-
     .card-priority { font-size: 11px; color: var(--text-subtle); white-space: nowrap; padding-top: 2px; }
-
     .card-status-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
-    .status-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 9px;
-      border-radius: 10px;
-      white-space: nowrap;
-    }
-
-    .sb-on-track   { background: var(--green-bg); color: var(--green); }
-    .sb-at-risk    { background: var(--yellow-bg); color: var(--yellow); }
-    .sb-blocked    { background: var(--red-bg); color: var(--red); }
-    .sb-done       { background: var(--teal-bg); color: var(--teal); }
-    .sb-abandoned  { background: var(--gray-bg); color: var(--gray); }
+    .status-badge { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 10px; white-space: nowrap; }
+    .sb-on-track  { background: var(--green-bg); color: var(--green); }
+    .sb-at-risk   { background: var(--yellow-bg); color: var(--yellow); }
+    .sb-blocked   { background: var(--red-bg); color: var(--red); }
+    .sb-done      { background: var(--teal-bg); color: var(--teal); }
+    .sb-abandoned { background: var(--gray-bg); color: var(--gray); }
     .sb-not-started{ background: var(--gray-bg); color: var(--gray); }
-    .sb-none       { background: var(--gray-bg); color: var(--text-subtle); }
-
+    .sb-none      { background: var(--gray-bg); color: var(--text-subtle); }
     .card-warning { font-size: 11px; color: var(--red); font-weight: 600; }
-
-    /* ── Update box ── */
-    .update-box {
-      background: var(--bg);
-      border-radius: 6px;
-      padding: 9px 11px;
-      font-size: 12px;
-    }
-
-    .update-meta {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      margin-bottom: 4px;
-    }
-
+    .update-box { background: var(--bg); border-radius: 6px; padding: 9px 11px; font-size: 12px; }
+    .update-meta { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
     .update-week-label { font-weight: 600; color: var(--text-muted); font-size: 11px; }
     .update-text { color: var(--text-muted); line-height: 1.55; }
-
-    .state-msg {
-      border-radius: 6px;
-      padding: 8px 11px;
-      font-size: 12px;
-      font-weight: 500;
-    }
-
+    .state-msg { border-radius: 6px; padding: 8px 11px; font-size: 12px; font-weight: 500; }
     .state-msg.missing      { background: var(--red-bg); color: #991b1b; }
     .state-msg.not-started  { background: var(--purple-bg); color: var(--purple); }
     .state-msg.never-updated{ background: var(--gray-bg); color: var(--gray); }
-
-    /* ── Week dots ── */
     .week-dots { display: flex; gap: 8px; align-items: flex-end; }
-
     .week-dot-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-
     .week-dot-lbl { font-size: 9px; color: var(--text-subtle); }
-
-    .week-dot {
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-      background: #e2e8f0;
-    }
-
-    .wd-green  { background: var(--green); }
-    .wd-yellow { background: #eab308; }
-    .wd-red    { background: var(--red); }
-    .wd-teal   { background: var(--teal); }
-    .wd-gray   { background: #9ca3af; }
-
+    .week-dot { width: 11px; height: 11px; border-radius: 50%; background: #e2e8f0; }
+    .wd-green { background: var(--green); } .wd-yellow { background: #eab308; }
+    .wd-red { background: var(--red); } .wd-teal { background: var(--teal); } .wd-gray { background: #9ca3af; }
     .week-dot.wdc { outline: 2px solid #2563eb; outline-offset: 2px; }
+
+    /* ── AI card buttons ── */
+    .card-ai-buttons { display: flex; gap: 6px; padding-top: 2px; }
+    .btn-ai { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; transition: all .12s; white-space: nowrap; }
+    .btn-ai:hover { border-color: #93c5fd; color: #2563eb; background: #eff6ff; }
+    .btn-deepdive { border-color: #d8b4fe; color: var(--purple); }
+    .btn-deepdive:hover { background: #faf5ff; border-color: #9333ea; color: #7e22ce; }
+
+    /* ── AI result panels (in card) ── */
+    .card-ai-panel { border-radius: 6px; padding: 10px 12px; font-size: 12px; line-height: 1.6; margin-top: 2px; }
+    .card-ai-panel-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .panel-translate { background: #f8fafc; border: 1px solid var(--border); }
+    .panel-translate .card-ai-panel-label { color: var(--text-subtle); }
+    .panel-translate .panel-body { color: var(--text-muted); }
+    .panel-deepdive { background: #faf5ff; border: 1px solid #e9d5ff; }
+    .panel-deepdive .card-ai-panel-label { color: #9333ea; }
+    .panel-deepdive .panel-body { color: #4c1d95; }
+    .ai-loading-inline { color: var(--text-subtle); font-style: italic; }
+    .ai-error-inline { color: var(--red); }
+
+    /* ── AI tabs ── */
+    .ai-tab-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
+    .ai-tab-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .ai-tab-context { font-size: 13px; color: var(--text-muted); }
+    .ai-tab-desc { font-size: 13px; color: var(--text-muted); max-width: 520px; line-height: 1.6; margin-bottom: 20px; }
+    .run-btn { padding: 10px 22px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s; white-space: nowrap; }
+    .run-btn:hover:not(:disabled) { background: #1d4ed8; }
+    .run-btn:disabled { opacity: .6; cursor: not-allowed; }
+    .run-btn-marcela { background: #9333ea; }
+    .run-btn-marcela:hover:not(:disabled) { background: #7e22ce; }
+    .ai-loading-full { padding: 32px; text-align: center; color: var(--text-muted); font-size: 14px; }
+    .ai-error-full { padding: 16px; background: var(--red-bg); color: var(--red); border-radius: 8px; font-size: 13px; }
+
+    /* Markdown output */
+    .analysis-result { font-size: 14px; line-height: 1.7; color: var(--text); }
+    .analysis-result h2 { font-size: 16px; font-weight: 700; margin: 24px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    .analysis-result h2:first-child { margin-top: 0; }
+    .analysis-result h3 { font-size: 14px; font-weight: 700; margin: 16px 0 8px; }
+    .analysis-result p { margin-bottom: 10px; color: var(--text-muted); }
+    .analysis-result ul, .analysis-result ol { padding-left: 20px; margin-bottom: 10px; color: var(--text-muted); }
+    .analysis-result li { margin-bottom: 4px; }
+    .analysis-result strong { color: var(--text); font-weight: 600; }
+    .marcela-result { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 10px; padding: 24px; }
+    .marcela-result p { color: #4c1d95; }
+    .marcela-result ul, .marcela-result ol { color: #4c1d95; }
+    .marcela-result h2 { color: var(--purple); border-bottom-color: #e9d5ff; }
+
+    /* ── API Key Modal ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+    .modal { background: var(--surface); border-radius: 12px; padding: 28px; width: 400px; max-width: 92vw; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+    .modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .modal-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+    .modal-warn { font-size: 11px; color: #92400e; background: #fef9c3; border-radius: 6px; padding: 8px 10px; margin-bottom: 16px; line-height: 1.5; }
+    .modal input { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 9px 12px; font-size: 13px; font-family: monospace; outline: none; margin-bottom: 14px; }
+    .modal input:focus { border-color: #93c5fd; }
+    .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; }
+    .modal-btn { padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); transition: all .12s; }
+    .modal-btn.primary { background: #2563eb; color: white; border-color: #2563eb; }
+    .modal-btn.primary:hover { background: #1d4ed8; }
+    .modal-btn.danger { color: var(--red); }
+    .modal-btn.danger:hover { background: var(--red-bg); border-color: var(--red); }
 
     /* ── Misc ── */
     #fileInput { display: none; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-
-    .empty-state {
-      text-align: center;
-      padding: 48px 24px;
-      color: var(--text-muted);
-      font-size: 14px;
-    }
+    .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); font-size: 14px; }
   </style>
 </head>
 <body>
 
 <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+
+<!-- ── API Key Modal ── -->
+<div id="apiKeyModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeApiModal()">
+  <div class="modal">
+    <h3>🔑 Chave API Anthropic</h3>
+    <p class="modal-hint">Necessária para os recursos de IA (Linguagem simples, Deep Dive, Análise, Marcela Mode).</p>
+    <p class="modal-warn">⚠️ A chave é armazenada localmente neste navegador. Não compartilhe este arquivo com a chave configurada. Use apenas em dispositivos de confiança.</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off">
+    <div class="modal-buttons">
+      <button class="modal-btn danger" onclick="clearApiKey()">Remover chave</button>
+      <button class="modal-btn" onclick="closeApiModal()">Cancelar</button>
+      <button class="modal-btn primary" onclick="saveApiKey()">Salvar</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Header ── -->
 <header class="header">
@@ -512,17 +266,12 @@
   <div class="h-selector">
     <span>Semana:</span>
     <select id="weekSelector">
-      <option value="1">S1</option>
-      <option value="2">S2</option>
-      <option value="3">S3</option>
-      <option value="4">S4</option>
-      <option value="5">S5</option>
-      <option value="6">S6</option>
+      <option value="1">S1</option><option value="2">S2</option><option value="3">S3</option>
+      <option value="4">S4</option><option value="5">S5</option><option value="6">S6</option>
     </select>
   </div>
-  <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-    ↑ Upload CSV / XLSX
-  </button>
+  <button class="api-key-btn" id="apiKeyBtn" onclick="openApiModal()">🔑 API Key</button>
+  <button class="upload-btn" onclick="document.getElementById('fileInput').click()">↑ Upload CSV / XLSX</button>
   <span class="last-updated" id="lastUpdated"></span>
 </header>
 
@@ -530,56 +279,65 @@
 <div class="layout">
 
   <nav class="sidebar">
+    <div class="sidebar-section-label">Dashboard</div>
     <div class="sidebar-tab active" data-tab="overview" onclick="switchTab('overview')">
-      <span>Overview</span>
-      <span class="tab-badge" id="badge-overview">—</span>
+      <span>Overview</span><span class="tab-badge" id="badge-overview">—</span>
     </div>
     <div class="sidebar-tab" data-tab="on-track" onclick="switchTab('on-track')">
-      <span>On Track</span>
-      <span class="tab-badge" id="badge-on-track">—</span>
+      <span>On Track</span><span class="tab-badge" id="badge-on-track">—</span>
     </div>
     <div class="sidebar-tab" data-tab="sem-update" onclick="switchTab('sem-update')">
-      <span>Sem update</span>
-      <span class="tab-badge" id="badge-sem-update">—</span>
+      <span>Sem update</span><span class="tab-badge" id="badge-sem-update">—</span>
     </div>
     <div class="sidebar-tab" data-tab="at-risk" onclick="switchTab('at-risk')">
-      <span>At Risk</span>
-      <span class="tab-badge" id="badge-at-risk">—</span>
+      <span>At Risk</span><span class="tab-badge" id="badge-at-risk">—</span>
+    </div>
+    <div class="sidebar-section-label">IA</div>
+    <div class="sidebar-tab" data-tab="ai-analysis" onclick="switchTab('ai-analysis')">
+      <span>Análise IA</span><span class="tab-badge" id="badge-ai-analysis">✦</span>
+    </div>
+    <div class="sidebar-tab marcela-tab" data-tab="marcela" onclick="switchTab('marcela')">
+      <span>Marcela Mode</span><span class="tab-badge" id="badge-marcela">✦</span>
     </div>
   </nav>
 
   <main class="main">
-
     <div class="welcome" id="welcomeScreen">
       <div class="welcome-icon">📊</div>
       <h2>Goals Dashboard</h2>
       <p>Faça upload do CSV exportado do Google Sheets para visualizar o progresso dos goals do ciclo.</p>
-      <button class="welcome-upload-btn" onclick="document.getElementById('fileInput').click()">
-        Fazer upload do arquivo
-      </button>
+      <button class="welcome-upload-btn" onclick="document.getElementById('fileInput').click()">Fazer upload do arquivo</button>
       <p class="welcome-formats">Aceita .csv e .xlsx &nbsp;·&nbsp; Google Sheets: Arquivo → Fazer download → CSV</p>
     </div>
-
     <div class="tab-content" id="tab-overview"></div>
     <div class="tab-content" id="tab-on-track"></div>
     <div class="tab-content" id="tab-sem-update"></div>
     <div class="tab-content" id="tab-at-risk"></div>
-
+    <div class="tab-content" id="tab-ai-analysis"></div>
+    <div class="tab-content" id="tab-marcela"></div>
   </main>
 </div>
 
 <script>
+// ─── Marked config ────────────────────────────────────────────────────────────
+marked.setOptions({ breaks: true, gfm: true });
+
 // ─── State ────────────────────────────────────────────────────────────────────
 let goals = [];
 let currentWeek = 1;
 let selectedCycle = 'all';
 let activeTab = 'overview';
+const aiCache = new Map();
+let renderGoalList = [];
+let renderIdx = 0;
+
+const MODEL = 'claude-sonnet-4-5';
 
 function visibleGoals() {
   return selectedCycle === 'all' ? goals : goals.filter(g => g.cycle === selectedCycle);
 }
 
-// ─── Placeholder detection ────────────────────────────────────────────────────
+// ─── Placeholders ─────────────────────────────────────────────────────────────
 const PLACEHOLDERS = new Set([
   '-', '--', '---', 'n/a', 'na', 'tbd', 'oncall', 'on call', 'on-call',
   'to be defined', 'arthur to update', 'leandro to update', 'a definir',
@@ -589,8 +347,7 @@ const PLACEHOLDERS = new Set([
 function isMeaningful(text) {
   if (!text) return false;
   const t = String(text).trim();
-  if (t === '') return false;
-  return !PLACEHOLDERS.has(t.toLowerCase());
+  return t !== '' && !PLACEHOLDERS.has(t.toLowerCase());
 }
 
 // ─── Column detection ─────────────────────────────────────────────────────────
@@ -598,39 +355,20 @@ function detectColumns(headers) {
   const cols = {};
   headers.forEach((h, i) => {
     if (h == null) return;
-    const raw = String(h).replace(/^﻿/, '').trim();
-    const n = raw.toLowerCase();
-
-    // Week columns first
+    const n = String(h).replace(/^﻿/, '').trim().toLowerCase();
     for (let w = 1; w <= 6; w++) {
-      if (new RegExp(`(week\\s*${w}|\\bw${w}\\b|\\bs${w}\\b|semana\\s*${w})\\s*(status|estado)`, 'i').test(n)) {
-        if (cols[`w${w}Status`] == null) cols[`w${w}Status`] = i;
-        return;
-      }
-      if (new RegExp(`(week\\s*${w}|\\bw${w}\\b|\\bs${w}\\b|semana\\s*${w})\\s*(update|atualiz)`, 'i').test(n)) {
-        if (cols[`w${w}Update`] == null) cols[`w${w}Update`] = i;
-        return;
-      }
+      if (new RegExp(`(week\\s*${w}|\\bw${w}\\b|\\bs${w}\\b|semana\\s*${w})\\s*(status|estado)`, 'i').test(n)) { if (cols[`w${w}Status`] == null) cols[`w${w}Status`] = i; return; }
+      if (new RegExp(`(week\\s*${w}|\\bw${w}\\b|\\bs${w}\\b|semana\\s*${w})\\s*(update|atualiz)`, 'i').test(n)) { if (cols[`w${w}Update`] == null) cols[`w${w}Update`] = i; return; }
     }
-
-    if (n.includes('owner') || n.includes('responsável') || n.includes('responsavel'))
-      { if (cols.owner == null) cols.owner = i; return; }
-    if (n === 'team' || n === 'squad' || n === 'área' || n === 'area' || n === 'time')
-      { if (cols.team == null) cols.team = i; return; }
-    if (n.includes('cycle') || n.includes('ciclo'))
-      { if (cols.cycle == null) cols.cycle = i; return; }
-    if (n.includes('output') || n.includes('resultado esperado') || n.includes('entregável'))
-      { if (cols.output == null) cols.output = i; return; }
-    if (n.includes('priority') || n.includes('prioridade'))
-      { if (cols.priority == null) cols.priority = i; return; }
-    if ((n.includes('automatic') || n.includes('automátic') || n.includes('automatico')) && n.includes('status'))
-      { if (cols.currentStatus == null) cols.currentStatus = i; return; }
-    if (n === 'current status' || n === 'status atual')
-      { if (cols.currentStatus == null) cols.currentStatus = i; return; }
-    if (n === 'six weeks goal' || n === 'goal' || n === 'objetivo' || n === 'meta')
-      { if (cols.goal == null) cols.goal = i; return; }
-    if (n.includes('six weeks goal') && !n.includes('owner') && !n.includes('output') && !n.includes('priority') && !n.includes('status') && !n.includes('cycle'))
-      { if (cols.goal == null) cols.goal = i; }
+    if (n.includes('owner') || n.includes('responsável') || n.includes('responsavel')) { if (cols.owner == null) cols.owner = i; return; }
+    if (n === 'team' || n === 'squad' || n === 'área' || n === 'area' || n === 'time') { if (cols.team == null) cols.team = i; return; }
+    if (n.includes('cycle') || n.includes('ciclo')) { if (cols.cycle == null) cols.cycle = i; return; }
+    if (n.includes('output') || n.includes('resultado esperado') || n.includes('entregável')) { if (cols.output == null) cols.output = i; return; }
+    if (n.includes('priority') || n.includes('prioridade')) { if (cols.priority == null) cols.priority = i; return; }
+    if ((n.includes('automatic') || n.includes('automátic') || n.includes('automatico')) && n.includes('status')) { if (cols.currentStatus == null) cols.currentStatus = i; return; }
+    if (n === 'current status' || n === 'status atual') { if (cols.currentStatus == null) cols.currentStatus = i; return; }
+    if (n === 'six weeks goal' || n === 'goal' || n === 'objetivo' || n === 'meta') { if (cols.goal == null) cols.goal = i; return; }
+    if (n.includes('six weeks goal') && !n.includes('owner') && !n.includes('output') && !n.includes('priority') && !n.includes('status') && !n.includes('cycle')) { if (cols.goal == null) cols.goal = i; }
   });
   return cols;
 }
@@ -638,47 +376,35 @@ function detectColumns(headers) {
 // ─── CSV parser ───────────────────────────────────────────────────────────────
 function parseCSV(text) {
   const rows = [];
-  const src = text.replace(/^﻿/, '');
-  const lines = src.split(/\r?\n/);
+  const lines = text.replace(/^﻿/, '').split(/\r?\n/);
   for (const line of lines) {
     if (line.trim() === '') continue;
-    const row = [];
-    let inQuote = false, cell = '';
+    const row = []; let inQ = false, cell = '';
     for (let i = 0; i < line.length; i++) {
       const ch = line[i];
-      if (ch === '"') {
-        if (inQuote && line[i + 1] === '"') { cell += '"'; i++; }
-        else inQuote = !inQuote;
-      } else if (ch === ',' && !inQuote) {
-        row.push(cell); cell = '';
-      } else {
-        cell += ch;
-      }
+      if (ch === '"') { if (inQ && line[i+1] === '"') { cell += '"'; i++; } else inQ = !inQ; }
+      else if (ch === ',' && !inQ) { row.push(cell); cell = ''; }
+      else cell += ch;
     }
-    row.push(cell);
-    rows.push(row);
+    row.push(cell); rows.push(row);
   }
   return rows;
 }
 
-// ─── File reader ──────────────────────────────────────────────────────────────
 function readFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+  return new Promise((res, rej) => {
+    const r = new FileReader();
     if (file.name.toLowerCase().endsWith('.csv')) {
-      reader.onload = e => { try { resolve(parseCSV(e.target.result)); } catch (err) { reject(err); } };
-      reader.readAsText(file, 'UTF-8');
+      r.onload = e => { try { res(parseCSV(e.target.result)); } catch(err) { rej(err); } };
+      r.readAsText(file, 'UTF-8');
     } else {
-      reader.onload = e => {
-        try {
-          const wb = XLSX.read(e.target.result, { type: 'array' });
-          const ws = wb.Sheets[wb.SheetNames[0]];
-          resolve(XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }));
-        } catch (err) { reject(err); }
+      r.onload = e => {
+        try { const wb = XLSX.read(e.target.result, {type:'array'}); res(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1,defval:''})); }
+        catch(err) { rej(err); }
       };
-      reader.readAsArrayBuffer(file);
+      r.readAsArrayBuffer(file);
     }
-    reader.onerror = reject;
+    r.onerror = rej;
   });
 }
 
@@ -686,104 +412,67 @@ function readFile(file) {
 function parseGoals(rows) {
   if (rows.length < 2) return [];
   const cols = detectColumns(rows[0]);
-  const result = [];
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
+  return rows.slice(1).reduce((acc, row) => {
     const owner = String(row[cols.owner] || '').trim();
     const goal  = String(row[cols.goal]  || '').trim();
-    if (!owner && !goal) continue;
+    if (!owner && !goal) return acc;
     const weeks = [];
-    for (let w = 1; w <= 6; w++) {
-      weeks.push({
-        status: String(row[cols[`w${w}Status`]] || '').trim(),
-        update: String(row[cols[`w${w}Update`]] || '').trim()
-      });
-    }
-    result.push({
-      owner,
-      team:          String(row[cols.team]          || '').trim(),
-      cycle:         String(row[cols.cycle]         || '').trim(),
-      goal,
-      output:        String(row[cols.output]        || '').trim(),
-      priority:      String(row[cols.priority]      || '').trim(),
-      currentStatus: String(row[cols.currentStatus] || '').trim(),
-      weeks
-    });
-  }
-  return result;
+    for (let w = 1; w <= 6; w++) weeks.push({ status: String(row[cols[`w${w}Status`]] || '').trim(), update: String(row[cols[`w${w}Update`]] || '').trim() });
+    acc.push({ owner, team: String(row[cols.team]||'').trim(), cycle: String(row[cols.cycle]||'').trim(), goal, output: String(row[cols.output]||'').trim(), priority: String(row[cols.priority]||'').trim(), currentStatus: String(row[cols.currentStatus]||'').trim(), weeks });
+    return acc;
+  }, []);
 }
 
-// ─── Auto-detect current week ─────────────────────────────────────────────────
 function detectCurrentWeek(list) {
-  for (let w = 6; w >= 1; w--) {
-    if (list.some(g => isMeaningful(g.weeks[w-1].update) || isMeaningful(g.weeks[w-1].status))) return w;
-  }
+  for (let w = 6; w >= 1; w--) if (list.some(g => isMeaningful(g.weeks[w-1].update) || isMeaningful(g.weeks[w-1].status))) return w;
   return 1;
 }
 
-// ─── Cycle dropdown ───────────────────────────────────────────────────────────
 function populateCycleSelector() {
   const cycles = [...new Set(goals.map(g => g.cycle).filter(Boolean))].sort();
   const sel = document.getElementById('cycleSelector');
-  sel.innerHTML = `<option value="all">Todos os ciclos</option>` +
-    cycles.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  sel.innerHTML = `<option value="all">Todos os ciclos</option>` + cycles.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
   sel.value = selectedCycle;
   document.getElementById('cycleSelectorWrap').style.display = cycles.length > 0 ? 'flex' : 'none';
 }
 
-// ─── Status normalization ─────────────────────────────────────────────────────
+// ─── Status ───────────────────────────────────────────────────────────────────
 function normalizeStatus(raw) {
   if (!raw) return 'none';
   const s = String(raw).trim().toLowerCase();
   if (!s) return 'none';
-  if (s === 'green'  || s.includes('on track')  || s.includes('verde')    || s === '🟢' || s === 'no prazo') return 'on-track';
-  if (s === 'yellow' || s.includes('at risk')   || s.includes('amarelo')  || s === '🟡' || s.includes('risco')) return 'at-risk';
-  if (s === 'red'    || s.includes('blocked')   || s.includes('vermelho') || s === '🔴' || s.includes('bloqueado')) return 'blocked';
-  if (s === 'done'   || s.includes('conclu')    || s.includes('feito')    || s === '✅' || s === 'completo') return 'done';
+  if (s==='green'||s.includes('on track')||s.includes('verde')||s==='🟢'||s==='no prazo') return 'on-track';
+  if (s==='yellow'||s.includes('at risk')||s.includes('amarelo')||s==='🟡'||s.includes('risco')) return 'at-risk';
+  if (s==='red'||s.includes('blocked')||s.includes('vermelho')||s==='🔴'||s.includes('bloqueado')) return 'blocked';
+  if (s==='done'||s.includes('conclu')||s.includes('feito')||s==='✅'||s==='completo') return 'done';
   if (s.includes('abandon')) return 'abandoned';
-  if (s.includes('not started') || s.includes('não iniciado') || s.includes('nao iniciado')) return 'not-started';
+  if (s.includes('not started')||s.includes('não iniciado')||s.includes('nao iniciado')) return 'not-started';
   return 'none';
 }
 
-const STATUS_LABEL = {
-  'on-track': 'On track', 'at-risk': 'At risk', 'blocked': 'Blocked',
-  'done': 'Done', 'abandoned': 'Abandoned', 'not-started': 'Not started', 'none': 'Sem update'
-};
+const STATUS_LABEL = { 'on-track':'On track','at-risk':'At risk','blocked':'Blocked','done':'Done','abandoned':'Abandoned','not-started':'Not started','none':'Sem update' };
 
-function statusBadgeHTML(norm) {
-  return `<span class="status-badge sb-${norm}">${STATUS_LABEL[norm] || 'Sem update'}</span>`;
-}
+function statusBadgeHTML(norm) { return `<span class="status-badge sb-${norm}">${STATUS_LABEL[norm]||'Sem update'}</span>`; }
 
-function effStatus(goal, week) {
-  return normalizeStatus(goal.currentStatus || goal.weeks[week-1].status);
-}
+function effStatus(goal, week) { return normalizeStatus(goal.currentStatus || goal.weeks[week-1].status); }
 
-// ─── Goal classification ──────────────────────────────────────────────────────
+// ─── Classification ───────────────────────────────────────────────────────────
 function classifyGoal(goal, week) {
   const wi = week - 1;
-  const hasPrevUpdate  = goal.weeks.slice(0, wi).some(w => isMeaningful(w.update));
-  const hasAnyUpdate   = goal.weeks.some(w => isMeaningful(w.update));
-  const hasAnyStatus   = isMeaningful(goal.currentStatus) || goal.weeks.some(w => isMeaningful(w.status));
-  const curMeaningful  = isMeaningful(goal.weeks[wi].update);
-  const st = effStatus(goal, week);
-
-  if (st === 'not-started' && !hasAnyUpdate) return 'not-started';
-  if (!hasAnyUpdate && !hasAnyStatus) return 'never-updated';
-  if (!curMeaningful && (hasPrevUpdate || (hasAnyStatus && st !== 'not-started'))) return 'missing';
+  const hasPrev  = goal.weeks.slice(0, wi).some(w => isMeaningful(w.update));
+  const hasAny   = goal.weeks.some(w => isMeaningful(w.update));
+  const hasSt    = isMeaningful(goal.currentStatus) || goal.weeks.some(w => isMeaningful(w.status));
+  const curOk    = isMeaningful(goal.weeks[wi].update);
+  const st       = effStatus(goal, week);
+  if (st === 'not-started' && !hasAny) return 'not-started';
+  if (!hasAny && !hasSt) return 'never-updated';
+  if (!curOk && (hasPrev || (hasSt && st !== 'not-started'))) return 'missing';
   return 'ok';
 }
 
-function isAtRisk(goal, week) {
-  const st = effStatus(goal, week);
-  return st === 'at-risk' || st === 'blocked' || st === 'abandoned';
-}
+function isAtRisk(g, week) { const s = effStatus(g,week); return s==='at-risk'||s==='blocked'||s==='abandoned'; }
+function isOnTrack(g, week) { const s = effStatus(g,week); return s==='on-track'||s==='done'; }
 
-function isOnTrack(goal, week) {
-  const st = effStatus(goal, week);
-  return st === 'on-track' || st === 'done';
-}
-
-// ─── Last meaningful update ───────────────────────────────────────────────────
 function getLastUpdate(goal, upToWeek) {
   for (let w = upToWeek; w >= 1; w--) {
     const wd = goal.weeks[w-1];
@@ -792,38 +481,272 @@ function getLastUpdate(goal, upToWeek) {
   return null;
 }
 
-// ─── Dot color ────────────────────────────────────────────────────────────────
 function dotCls(status) {
   const n = normalizeStatus(status);
-  if (n === 'on-track') return 'wd-green';
-  if (n === 'at-risk')  return 'wd-yellow';
-  if (n === 'blocked')  return 'wd-red';
-  if (n === 'done')     return 'wd-teal';
-  if (n === 'abandoned' || n === 'not-started') return 'wd-gray';
+  if (n==='on-track') return 'wd-green'; if (n==='at-risk') return 'wd-yellow';
+  if (n==='blocked')  return 'wd-red';   if (n==='done')     return 'wd-teal';
+  if (n==='abandoned'||n==='not-started') return 'wd-gray';
   return '';
 }
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 const AV_COLORS = ['#2563eb','#7c3aed','#0d9488','#b45309','#dc2626','#0891b2','#db2777','#16a34a'];
+function avatarColor(n) { let h=0; for(const c of n) h=(Math.imul(h,31)+c.charCodeAt(0))|0; return AV_COLORS[Math.abs(h)%AV_COLORS.length]; }
+function initials(n) { const p=n.trim().split(/\s+/); return p.length===1?p[0].slice(0,2).toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase(); }
 
-function avatarColor(name) {
-  let h = 0;
-  for (const c of name) h = (Math.imul(h, 31) + c.charCodeAt(0)) | 0;
-  return AV_COLORS[Math.abs(h) % AV_COLORS.length];
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function goalKey(g) { return `${g.owner}||${g.goal}||${g.output}`; }
+
+// ─── API Key ──────────────────────────────────────────────────────────────────
+// Falls back to an in-memory variable when localStorage is unavailable (data: URLs, strict sandboxes).
+// On GitHub Pages (HTTPS) localStorage works normally and the key persists across reloads.
+let _apiKeyMem = '';
+
+function getApiKey() {
+  try { return localStorage.getItem('da_dashboard_api_key') || _apiKeyMem; }
+  catch { return _apiKeyMem; }
 }
 
-function initials(name) {
-  const p = name.trim().split(/\s+/);
-  return p.length === 1 ? p[0].slice(0, 2).toUpperCase() : (p[0][0] + p[p.length-1][0]).toUpperCase();
+function _saveKeyStorage(val) {
+  _apiKeyMem = val;
+  try { if (val) localStorage.setItem('da_dashboard_api_key', val); else localStorage.removeItem('da_dashboard_api_key'); } catch {}
 }
 
-function esc(s) {
-  return String(s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function openApiModal() {
+  document.getElementById('apiKeyInput').value = getApiKey() ? '••••••••••••••••' : '';
+  document.getElementById('apiKeyModal').style.display = 'flex';
+  if (!getApiKey()) document.getElementById('apiKeyInput').value = '';
+}
+
+function closeApiModal() { document.getElementById('apiKeyModal').style.display = 'none'; }
+
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (val && val !== '••••••••••••••••') _saveKeyStorage(val);
+  updateApiKeyBtn();
+  closeApiModal();
+}
+
+function clearApiKey() {
+  _saveKeyStorage('');
+  document.getElementById('apiKeyInput').value = '';
+  updateApiKeyBtn();
+  closeApiModal();
+}
+
+function updateApiKeyBtn() {
+  const btn = document.getElementById('apiKeyBtn');
+  if (getApiKey()) { btn.classList.add('configured'); btn.textContent = '🔑 API Key ✓'; }
+  else { btn.classList.remove('configured'); btn.textContent = '🔑 API Key'; }
+}
+
+// ─── Claude API ───────────────────────────────────────────────────────────────
+async function callClaude(prompt, maxTokens = 1000) {
+  const apiKey = getApiKey();
+  if (!apiKey) { openApiModal(); throw new Error('Configure sua chave API primeiro.'); }
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.content[0].text;
+}
+
+// ─── Goal JSON for AI ─────────────────────────────────────────────────────────
+function goalsToJSON(list, week) {
+  return JSON.stringify(list.map(g => {
+    const lastUpd = getLastUpdate(g, week);
+    return {
+      owner: g.owner, team: g.team,
+      goal: g.goal, output: g.output,
+      status: g.currentStatus || g.weeks[week-1].status || 'sem status',
+      semUpdate: classifyGoal(g, week) !== 'ok',
+      ultimoUpdate: lastUpd ? `S${lastUpd.week}: ${lastUpd.text.slice(0,200)}` : null,
+      todosUpdates: g.weeks.map((w,i) => w.update ? `S${i+1}: ${w.update.slice(0,150)}` : null).filter(Boolean)
+    };
+  }), null, 2);
+}
+
+// ─── Prompts ──────────────────────────────────────────────────────────────────
+function deepDivePrompt(goal, week) {
+  const lastUpd = getLastUpdate(goal, week);
+  const updates = goal.weeks.map((w,i) => w.update ? `Semana ${i+1}: ${w.update}` : null).filter(Boolean).join('\n');
+  return `Analise este goal para uma stakeholder de negócio não-técnica. Responda em português com as seguintes seções:
+
+## Em linguagem simples
+2–3 frases sem jargão técnico: o que este goal está tentando fazer, onde as coisas estão agora, e se há algo que precisa de atenção.
+
+## Componentes técnicos
+Para cada termo técnico mencionado no goal ou nos updates (ex: Iceberg, DAG, EKS, Lakehouse, dbt, Spark, etc.): explique o que é em linguagem acessível e como se encaixa neste contexto.
+
+## Por que importa para o negócio
+O valor concreto que este goal entrega quando concluído.
+
+## O que pode dar errado
+Principais riscos ou dependências que merecem atenção.
+
+---
+Goal: ${goal.output || goal.goal}
+Descrição original: ${goal.goal}
+Owner: ${goal.owner} — Time: ${goal.team}
+Status atual: ${goal.currentStatus || goal.weeks[week-1].status || 'sem status'}
+Último update: ${lastUpd ? `Semana ${lastUpd.week}: ${lastUpd.text}` : 'Nenhum update registrado'}
+Todos os updates:
+${updates || 'Nenhum update registrado'}`;
+}
+
+function analysisPrompt(json, week) {
+  return `Você é um assistente de PM analisando goals de um ciclo de 6 semanas.
+
+Semana atual do ciclo: ${week} de 6
+
+Goals (JSON):
+${json}
+
+Responda em português, estruturado em exatamente 4 seções com esses títulos:
+
+## Updates não enviados
+Liste os owners que não enviaram update na Semana ${week}. Para cada um: nome e título do goal.
+
+## Itens em risco
+Para goals com status Yellow, Red ou Abandoned: explique por que cada um é preocupante (1–2 frases por goal). Inclua também goals com atualizações vagas ou estagnadas.
+
+## O que está indo bem
+Destaque 3–5 goals com momentum forte e progresso consistente. Explique brevemente por quê.
+
+## Action items para a PM
+Liste 3–5 ações concretas e específicas para esta semana, com indicação de owner quando relevante.`;
+}
+
+function marcelaPrompt(json, week) {
+  return `Você é Marcela, uma PM sênior com visão estratégica aguçada e governança rigorosa. Seus padrões de comportamento:
+- Sempre questiona qual é o valor de negócio disso
+- Sinaliza imediatamente quando o ownership não está claro
+- Lê vaguidade como risco — se não dá pra explicar simplesmente, provavelmente não está claro
+- Pergunta o que acontece se isso atrasar uma semana, e um mês
+- Questiona dependências de terceiros e pergunta se há plano B
+- Exige definição clara de done — o que exatamente estará funcionando
+- Empurra para versões menores e lançáveis: qual é a fatia mais simples que já entrega valor
+- Propõe realocar energia quando algo está travado ou de baixo impacto
+
+Dados dos goals, Semana ${week} de 6:
+${json}
+
+Responda em português, estruturado em exatamente 4 seções:
+
+## 🔍 Perguntas que a Marcela faria
+
+Agrupe por Time e, dentro de cada time, por Owner. Para cada owner liste as perguntas em bullet points separados.
+Use o nome exato do goal (campo "output" ou "goal") ao referenciar — nunca use "primeiro goal", "segundo goal" ou similar.
+Não use aspas em nenhuma das perguntas.
+Formato esperado:
+
+**Nome do Time**
+*Nome do Owner*
+- Pergunta direta sobre o goal X
+- Pergunta direta sobre o goal Y
+
+## ⚠️ Sinais de risco
+4–6 sinais de risco específicos que ela identificaria neste ciclo. Para cada um: mencione o goal pelo nome e explique o risco em 1–2 frases.
+
+## ✂️ Qual é a versão mais simples?
+3–4 goals onde ela questionaria o escopo. Para cada um: mencione o goal pelo nome, o que ela cortaria e por quê.
+
+## 👤 Quem precisa de uma conversa
+2–3 pessoas com quem ela entraria em contato proativamente esta semana, e sobre o quê especificamente (mencione o goal pelo nome).`;
+}
+
+// ─── Per-card AI handlers ─────────────────────────────────────────────────────
+async function handleDeepDive(idx) {
+  const goal = renderGoalList[idx];
+  if (!goal) return;
+  const key = goalKey(goal) + ':deepdive';
+  const panel = document.getElementById(`ai-d-${idx}`);
+  if (!panel) return;
+
+  // Only toggle if a successful result is already loaded
+  if (panel.dataset.ready === '1') {
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    return;
+  }
+
+  panel.style.display = 'block';
+  panel.innerHTML = '<span class="ai-loading-inline">⏳ Fazendo deep dive...</span>';
+
+  try {
+    const cached = aiCache.get(key);
+    const text = cached || await callClaude(deepDivePrompt(goal, currentWeek));
+    if (!cached) aiCache.set(key, text);
+    panel.dataset.ready = '1';
+    panel.innerHTML = `<div class="card-ai-panel-label">🔍 Deep dive</div><div class="panel-body">${marked.parse(text)}</div>`;
+  } catch (err) {
+    // Clear panel so the button retries on next click
+    panel.dataset.ready = '0';
+    panel.innerHTML = '';
+    panel.style.display = 'none';
+    // Show a temporary error message next to the button
+    const tmp = document.createElement('span');
+    tmp.style.cssText = 'font-size:11px;color:var(--red);padding:2px 4px;display:inline-block';
+    tmp.textContent = `Erro: ${err.message}`;
+    panel.insertAdjacentElement('beforebegin', tmp);
+    setTimeout(() => tmp.remove(), 6000);
+  }
+}
+
+// ─── AI Analysis tab ──────────────────────────────────────────────────────────
+async function runAnalysis() {
+  const btn = document.getElementById('run-analysis-btn');
+  const panel = document.getElementById('analysis-result-panel');
+  if (!getApiKey()) { openApiModal(); return; }
+  btn.disabled = true; btn.textContent = '⏳ Analisando...';
+  panel.innerHTML = '<div class="ai-loading-full">Analisando todos os goals... isso pode levar alguns segundos.</div>';
+  const key = `analysis:${selectedCycle}:${currentWeek}`;
+  try {
+    const text = await callClaude(analysisPrompt(goalsToJSON(visibleGoals(), currentWeek), currentWeek));
+    aiCache.set(key, text);
+    panel.innerHTML = marked.parse(text);
+    btn.textContent = '🔄 Re-rodar análise'; btn.disabled = false;
+  } catch (err) {
+    panel.innerHTML = `<div class="ai-error-full">Erro: ${esc(err.message)}</div>`;
+    btn.textContent = '▶ Rodar análise'; btn.disabled = false;
+  }
+}
+
+// ─── Marcela Mode tab ─────────────────────────────────────────────────────────
+async function runMarcela() {
+  const btn = document.getElementById('run-marcela-btn');
+  const panel = document.getElementById('marcela-result-panel');
+  if (!getApiKey()) { openApiModal(); return; }
+  btn.disabled = true; btn.textContent = '⏳ Ativando Marcela Mode...';
+  panel.innerHTML = '<div class="ai-loading-full">Aplicando a lente da Marcela nos goals...</div>';
+  const key = `marcela:${selectedCycle}:${currentWeek}`;
+  try {
+    const text = await callClaude(marcelaPrompt(goalsToJSON(visibleGoals(), currentWeek), currentWeek));
+    aiCache.set(key, text);
+    panel.innerHTML = marked.parse(text);
+    btn.textContent = '🔄 Re-rodar'; btn.disabled = false;
+  } catch (err) {
+    panel.innerHTML = `<div class="ai-error-full">Erro: ${esc(err.message)}</div>`;
+    btn.textContent = '▶ Rodar Marcela Mode'; btn.disabled = false;
+  }
 }
 
 // ─── Goal card ────────────────────────────────────────────────────────────────
 function goalCardHTML(goal, week) {
+  const idx = renderIdx++;
+  renderGoalList[idx] = goal;
+
   const state = classifyGoal(goal, week);
   const st = effStatus(goal, week);
 
@@ -831,58 +754,46 @@ function goalCardHTML(goal, week) {
   if      (state === 'missing')       cardCls = 'c-missing';
   else if (state === 'not-started')   cardCls = 'c-not-started';
   else if (state === 'never-updated') cardCls = 'c-never-updated';
-  else {
-    cardCls = { 'on-track': 'c-on-track', 'at-risk': 'c-at-risk', 'blocked': 'c-blocked',
-                'done': 'c-done', 'abandoned': 'c-abandoned' }[st] || '';
-  }
+  else cardCls = { 'on-track':'c-on-track','at-risk':'c-at-risk','blocked':'c-blocked','done':'c-done','abandoned':'c-abandoned' }[st] || '';
 
   const warningHTML = state === 'missing' ? `<span class="card-warning">⚠ sem S${week}</span>` : '';
 
   const lastUpd = getLastUpdate(goal, week);
   let boxHTML;
   if (lastUpd) {
-    const txt = lastUpd.text.length > 280 ? lastUpd.text.slice(0, 280) + '…' : lastUpd.text;
-    boxHTML = `<div class="update-box">
-      <div class="update-meta">
-        <span class="update-week-label">Semana ${lastUpd.week}</span>
-        ${statusBadgeHTML(lastUpd.status)}
-      </div>
-      <div class="update-text">${esc(txt)}</div>
-    </div>`;
+    const txt = lastUpd.text.length > 280 ? lastUpd.text.slice(0,280)+'…' : lastUpd.text;
+    boxHTML = `<div class="update-box"><div class="update-meta"><span class="update-week-label">Semana ${lastUpd.week}</span>${statusBadgeHTML(lastUpd.status)}</div><div class="update-text">${esc(txt)}</div></div>`;
   } else {
-    const msgCls = state === 'missing' ? 'missing' : state === 'not-started' ? 'not-started' : 'never-updated';
-    const msgTxt = state === 'missing'     ? `Sem atualização para S${week}`
-                 : state === 'not-started' ? 'Goal não iniciado'
-                                           : 'Goal nunca atualizado';
+    const msgCls = state==='missing'?'missing':state==='not-started'?'not-started':'never-updated';
+    const msgTxt = state==='missing'?`Sem atualização para S${week}`:state==='not-started'?'Goal não iniciado':'Goal nunca atualizado';
     boxHTML = `<div class="state-msg ${msgCls}">${msgTxt}</div>`;
   }
 
-  const dotsHTML = goal.weeks.map((wd, idx) => {
-    const w = idx + 1;
-    return `<div class="week-dot-item">
-      <span class="week-dot-lbl">S${w}</span>
-      <div class="week-dot ${dotCls(wd.status)} ${w === week ? 'wdc' : ''}"></div>
-    </div>`;
-  }).join('');
+  const dotsHTML = goal.weeks.map((wd,i) => `<div class="week-dot-item"><span class="week-dot-lbl">S${i+1}</span><div class="week-dot ${dotCls(wd.status)} ${i+1===week?'wdc':''}"></div></div>`).join('');
 
-  // Title is Six Weeks Goal Output (column F); fall back to goal name if output is empty
   const title = goal.output || goal.goal;
+
+  // Pre-populate deep dive panel from cache (hidden by default)
+  const dKey = goalKey(goal) + ':deepdive';
+  const dCached = aiCache.get(dKey);
+  const dContent = dCached ? `<div class="card-ai-panel-label">🔍 Deep dive</div><div class="panel-body">${marked.parse(dCached)}</div>` : '';
 
   return `<div class="goal-card ${cardCls}">
     <div class="card-top">
       <div class="card-goal-name">${esc(title)}</div>
       ${goal.priority ? `<span class="card-priority">${esc(goal.priority)}</span>` : ''}
     </div>
-    <div class="card-status-row">
-      ${statusBadgeHTML(st)}
-      ${warningHTML}
-    </div>
+    <div class="card-status-row">${statusBadgeHTML(st)}${warningHTML}</div>
     ${boxHTML}
     <div class="week-dots">${dotsHTML}</div>
+    <div class="card-ai-buttons">
+      <button class="btn-ai btn-deepdive" onclick="handleDeepDive(${idx})">🔍 Deep Dive</button>
+    </div>
+    <div class="card-ai-panel panel-deepdive" id="ai-d-${idx}" style="display:none">${dContent}</div>
   </div>`;
 }
 
-// ─── Grouping: Team → Owner ───────────────────────────────────────────────────
+// ─── Grouping ─────────────────────────────────────────────────────────────────
 function groupByTeamOwner(list) {
   const teams = new Map();
   for (const g of list) {
@@ -899,179 +810,155 @@ function groupByTeamOwner(list) {
 function ownerGroupHTML(owner, ownerGoals, week) {
   const mu = ownerGoals.filter(g => classifyGoal(g, week) !== 'ok').length;
   const ar = ownerGoals.filter(g => isAtRisk(g, week)).length;
-
-  const badgesHTML = [
-    mu > 0 ? `<span class="mini-badge mu">${mu} sem update</span>` : '',
-    ar > 0 ? `<span class="mini-badge ar">${ar} at risk</span>` : ''
-  ].filter(Boolean).join('');
-
+  const badges = [mu>0?`<span class="mini-badge mu">${mu} sem update</span>`:'', ar>0?`<span class="mini-badge ar">${ar} at risk</span>`:''].filter(Boolean).join('');
   return `<div class="owner-group">
     <div class="owner-header">
       <div class="owner-avatar" style="background:${avatarColor(owner)}">${initials(owner)}</div>
       <div><div class="owner-name">${esc(owner)}</div></div>
-      <div class="owner-mini-badges">${badgesHTML}</div>
+      <div class="owner-mini-badges">${badges}</div>
     </div>
     <div class="cards-grid">${ownerGoals.map(g => goalCardHTML(g, week)).join('')}</div>
   </div>`;
 }
 
 function renderTeamOwnerGroups(list, week) {
-  if (list.length === 0) return '<div class="empty-state">Nenhum goal nesta categoria.</div>';
+  if (!list.length) return '<div class="empty-state">Nenhum goal nesta categoria.</div>';
   const teams = groupByTeamOwner(list);
   return [...teams.entries()].map(([team, ownersMap]) => {
-    const teamGoals = [...ownersMap.values()].flat();
-    const ownersHTML = [...ownersMap.entries()].map(([o, og]) => ownerGroupHTML(o, og, week)).join('');
+    const tg = [...ownersMap.values()].flat();
+    const ownersHTML = [...ownersMap.entries()].map(([o,og]) => ownerGroupHTML(o,og,week)).join('');
     return `<div class="team-section">
-      <div class="team-section-header">
-        <span class="team-section-name">${esc(team)}</span>
-        <span class="team-section-count">${teamGoals.length} goals</span>
-      </div>
+      <div class="team-section-header"><span class="team-section-name">${esc(team)}</span><span class="team-section-count">${tg.length} goals</span></div>
       <div class="team-section-body">${ownersHTML}</div>
     </div>`;
   }).join('');
 }
 
-// ─── Tab: Overview ────────────────────────────────────────────────────────────
+// ─── Tab renderers ────────────────────────────────────────────────────────────
 function renderOverview(week) {
   const vg = visibleGoals();
   const total   = vg.length;
-  const onTrack = vg.filter(g => effStatus(g, week) === 'on-track').length;
-  const atRisk  = vg.filter(g => isAtRisk(g, week)).length;
-  const noUpd   = vg.filter(g => classifyGoal(g, week) !== 'ok').length;
+  const onTrack = vg.filter(g => effStatus(g,week)==='on-track').length;
+  const atRisk  = vg.filter(g => isAtRisk(g,week)).length;
+  const noUpd   = vg.filter(g => classifyGoal(g,week)!=='ok').length;
 
-  const statsHTML = `<div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-label">Total Goals</div>
-      <div class="stat-value">${total}</div>
-    </div>
-    <div class="stat-card s-on-track">
-      <div class="stat-label">On Track</div>
-      <div class="stat-value">${onTrack}</div>
-    </div>
-    <div class="stat-card s-at-risk">
-      <div class="stat-label">At Risk</div>
-      <div class="stat-value">${atRisk}</div>
-    </div>
-    <div class="stat-card s-sem-update">
-      <div class="stat-label">Sem Update S${week}</div>
-      <div class="stat-value">${noUpd}</div>
-    </div>
+  const stats = `<div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Total Goals</div><div class="stat-value">${total}</div></div>
+    <div class="stat-card s-on-track"><div class="stat-label">On Track</div><div class="stat-value">${onTrack}</div></div>
+    <div class="stat-card s-at-risk"><div class="stat-label">At Risk</div><div class="stat-value">${atRisk}</div></div>
+    <div class="stat-card s-sem-update"><div class="stat-label">Sem Update S${week}</div><div class="stat-value">${noUpd}</div></div>
   </div>`;
 
-  // Team breakdown
   const teams = groupByTeamOwner(vg);
   const tbRows = [...teams.entries()].map(([team, ownersMap]) => {
     const tg = [...ownersMap.values()].flat();
-    const ot  = tg.filter(g => effStatus(g, week) === 'on-track').length;
-    const ar  = tg.filter(g => effStatus(g, week) === 'at-risk').length;
-    const bl  = tg.filter(g => effStatus(g, week) === 'blocked').length;
-    const dn  = tg.filter(g => effStatus(g, week) === 'done').length;
-    const su  = tg.filter(g => classifyGoal(g, week) !== 'ok').length;
-
-    const pill = (n, cls, label) => n > 0
-      ? `<span class="tb-pill ${cls}">${n} ${label}</span>`
-      : `<span class="tp-zero">—</span>`;
-
+    const ot = tg.filter(g => effStatus(g,week)==='on-track').length;
+    const ar = tg.filter(g => effStatus(g,week)==='at-risk').length;
+    const bl = tg.filter(g => effStatus(g,week)==='blocked').length;
+    const dn = tg.filter(g => effStatus(g,week)==='done').length;
+    const su = tg.filter(g => classifyGoal(g,week)!=='ok').length;
+    const pill = (n,cls,lbl) => n>0?`<span class="tb-pill ${cls}">${n} ${lbl}</span>`:`<span class="tp-zero">—</span>`;
     return `<div class="tb-row">
-      <span class="tb-team">${esc(team)}</span>
-      <span class="tb-total">${tg.length}</span>
-      ${pill(ot, 'tp-on-track',  'on track')}
-      ${pill(ar, 'tp-at-risk',   'at risk')}
-      ${pill(bl, 'tp-blocked',   'blocked')}
-      ${pill(dn, 'tp-done',      'done')}
-      ${pill(su, 'tp-sem-update','sem upd')}
+      <span class="tb-team">${esc(team)}</span><span class="tb-total">${tg.length}</span>
+      ${pill(ot,'tp-on-track','on track')}${pill(ar,'tp-at-risk','at risk')}
+      ${pill(bl,'tp-blocked','blocked')}${pill(dn,'tp-done','done')}${pill(su,'tp-sem-update','sem upd')}
     </div>`;
   }).join('');
 
-  const breakdownHTML = `
-    <div class="section-header" style="margin-top:0">
-      <span class="section-title">Por time</span>
-    </div>
+  const breakdown = `<div class="section-header" style="margin-top:0"><span class="section-title">Por time</span></div>
     <div class="team-breakdown">
-      <div class="tb-header">
-        <span>Time</span><span>Total</span><span>On track</span>
-        <span>At risk</span><span>Blocked</span><span>Done</span><span>Sem update</span>
-      </div>
+      <div class="tb-header"><span>Time</span><span>Total</span><span>On track</span><span>At risk</span><span>Blocked</span><span>Done</span><span>Sem update</span></div>
       ${tbRows}
     </div>`;
 
-  // At Risk cards
-  const arGoals = vg.filter(g => isAtRisk(g, week));
-  let atRiskHTML = '';
-  if (arGoals.length > 0) {
-    atRiskHTML = `<hr class="divider">
-      <div class="section-header" style="margin-top:0">
-        <span class="section-title">At Risk</span>
-        <span class="section-count">${arGoals.length} goals</span>
-      </div>
-      ${renderTeamOwnerGroups(arGoals, week)}`;
-  }
+  const arGoals = vg.filter(g => isAtRisk(g,week));
+  const arHTML = arGoals.length ? `<hr class="divider"><div class="section-header" style="margin-top:0"><span class="section-title">At Risk</span><span class="section-count">${arGoals.length} goals</span></div>${renderTeamOwnerGroups(arGoals,week)}` : '';
 
-  return statsHTML + breakdownHTML + atRiskHTML;
+  return stats + breakdown + arHTML;
 }
 
-// ─── Tab: On Track ────────────────────────────────────────────────────────────
 function renderOnTrack(week) {
-  const vg = visibleGoals().filter(g => isOnTrack(g, week));
-  if (vg.length === 0) return '<div class="empty-state">Nenhum goal on track ou done no momento.</div>';
+  const vg = visibleGoals().filter(g => isOnTrack(g,week));
+  if (!vg.length) return '<div class="empty-state">Nenhum goal on track ou done no momento.</div>';
   return renderTeamOwnerGroups(vg, week);
 }
 
-// ─── Tab: Sem update ──────────────────────────────────────────────────────────
 function renderSemUpdate(week) {
   const vg = visibleGoals();
-  const all = vg.filter(g => classifyGoal(g, week) !== 'ok');
-  if (all.length === 0) return '<div class="empty-state">Todos os goals têm update para esta semana 🎉</div>';
-
-  const mc = all.filter(g => classifyGoal(g, week) === 'missing').length;
-  const nc = all.filter(g => classifyGoal(g, week) === 'not-started').length;
-  const vc = all.filter(g => classifyGoal(g, week) === 'never-updated').length;
-
-  const breakdown = `<div class="count-breakdown">
-    <strong>${all.length} goals</strong> sem update &nbsp;·&nbsp;
-    <span style="color:var(--red);font-weight:600">${mc} sem S${week}</span> &nbsp;·&nbsp;
-    <span style="color:#9333ea;font-weight:600">${nc} not started</span> &nbsp;·&nbsp;
-    <span style="color:#6b7280;font-weight:600">${vc} nunca atualizados</span>
-  </div>`;
-
+  const all = vg.filter(g => classifyGoal(g,week)!=='ok');
+  if (!all.length) return '<div class="empty-state">Todos os goals têm update para esta semana 🎉</div>';
+  const mc=all.filter(g=>classifyGoal(g,week)==='missing').length;
+  const nc=all.filter(g=>classifyGoal(g,week)==='not-started').length;
+  const vc=all.filter(g=>classifyGoal(g,week)==='never-updated').length;
+  const breakdown = `<div class="count-breakdown"><strong>${all.length} goals</strong> sem update &nbsp;·&nbsp; <span style="color:var(--red);font-weight:600">${mc} sem S${week}</span> &nbsp;·&nbsp; <span style="color:#9333ea;font-weight:600">${nc} not started</span> &nbsp;·&nbsp; <span style="color:#6b7280;font-weight:600">${vc} nunca atualizados</span></div>`;
   return breakdown + renderTeamOwnerGroups(all, week);
 }
 
-// ─── Tab: At Risk ─────────────────────────────────────────────────────────────
 function renderAtRisk(week) {
-  const vg = visibleGoals().filter(g => isAtRisk(g, week));
-  if (vg.length === 0) return '<div class="empty-state">Nenhum goal at risk no momento 🎉</div>';
+  const vg = visibleGoals().filter(g => isAtRisk(g,week));
+  if (!vg.length) return '<div class="empty-state">Nenhum goal at risk no momento 🎉</div>';
   return renderTeamOwnerGroups(vg, week);
 }
 
-// ─── Badge counts ─────────────────────────────────────────────────────────────
+function renderAIAnalysis(week) {
+  const key = `analysis:${selectedCycle}:${week}`;
+  const cached = aiCache.get(key);
+  const cycle = selectedCycle === 'all' ? 'Todos os ciclos' : selectedCycle;
+  return `<div class="ai-tab-header">
+    <div>
+      <div class="ai-tab-title">Análise do Ciclo</div>
+      <div class="ai-tab-context">Semana ${week} de 6 · ${cycle}</div>
+    </div>
+    <button class="run-btn" id="run-analysis-btn" onclick="runAnalysis()">${cached?'🔄 Re-rodar análise':'▶ Rodar análise'}</button>
+  </div>
+  <p class="ai-tab-desc">Envia todos os goals visíveis para o Claude e gera um briefing estruturado: quem não atualizou, itens em risco, o que está indo bem e action items para a PM.</p>
+  <div id="analysis-result-panel" class="analysis-result">${cached ? marked.parse(cached) : ''}</div>`;
+}
+
+function renderMarcela(week) {
+  const key = `marcela:${selectedCycle}:${week}`;
+  const cached = aiCache.get(key);
+  const cycle = selectedCycle === 'all' ? 'Todos os ciclos' : selectedCycle;
+  return `<div class="ai-tab-header">
+    <div>
+      <div class="ai-tab-title">Marcela Mode ✦</div>
+      <div class="ai-tab-context">Semana ${week} de 6 · ${cycle}</div>
+    </div>
+    <button class="run-btn run-btn-marcela" id="run-marcela-btn" onclick="runMarcela()">${cached?'🔄 Re-rodar':'▶ Rodar Marcela Mode'}</button>
+  </div>
+  <p class="ai-tab-desc">Simula a lente de governança da Marcela: perguntas diretas por goal, sinais de risco, metas para fatiar, e quem precisa de uma conversa esta semana.</p>
+  <div id="marcela-result-panel" class="analysis-result marcela-result">${cached ? marked.parse(cached) : ''}</div>`;
+}
+
+// ─── Badges ───────────────────────────────────────────────────────────────────
 function updateBadges(week) {
   const vg = visibleGoals();
-  document.getElementById('badge-overview').textContent  = vg.length;
-  document.getElementById('badge-on-track').textContent  = vg.filter(g => isOnTrack(g, week)).length;
-  document.getElementById('badge-sem-update').textContent= vg.filter(g => classifyGoal(g, week) !== 'ok').length;
-  document.getElementById('badge-at-risk').textContent   = vg.filter(g => isAtRisk(g, week)).length;
+  document.getElementById('badge-overview').textContent   = vg.length;
+  document.getElementById('badge-on-track').textContent   = vg.filter(g => isOnTrack(g,week)).length;
+  document.getElementById('badge-sem-update').textContent = vg.filter(g => classifyGoal(g,week)!=='ok').length;
+  document.getElementById('badge-at-risk').textContent    = vg.filter(g => isAtRisk(g,week)).length;
 }
 
 // ─── Full render ──────────────────────────────────────────────────────────────
 function renderDashboard() {
-  const cycleLabel = selectedCycle === 'all' ? '' : `${selectedCycle} · `;
-  document.getElementById('cycleLabel').textContent = `${cycleLabel}Semana ${currentWeek} de 6`;
+  renderIdx = 0; renderGoalList = [];
+  const cycle = selectedCycle === 'all' ? '' : `${selectedCycle} · `;
+  document.getElementById('cycleLabel').textContent = `${cycle}Semana ${currentWeek} de 6`;
   updateBadges(currentWeek);
   document.getElementById('tab-overview').innerHTML   = renderOverview(currentWeek);
   document.getElementById('tab-on-track').innerHTML   = renderOnTrack(currentWeek);
   document.getElementById('tab-sem-update').innerHTML = renderSemUpdate(currentWeek);
   document.getElementById('tab-at-risk').innerHTML    = renderAtRisk(currentWeek);
+  document.getElementById('tab-ai-analysis').innerHTML = renderAIAnalysis(currentWeek);
+  document.getElementById('tab-marcela').innerHTML     = renderMarcela(currentWeek);
   switchTab(activeTab);
 }
 
 // ─── Tab switching ────────────────────────────────────────────────────────────
 function switchTab(tab) {
   activeTab = tab;
-  document.querySelectorAll('.sidebar-tab').forEach(el =>
-    el.classList.toggle('active', el.dataset.tab === tab));
-  document.querySelectorAll('.tab-content').forEach(el =>
-    el.classList.toggle('active', el.id === `tab-${tab}`));
+  document.querySelectorAll('.sidebar-tab').forEach(el => el.classList.toggle('active', el.dataset.tab === tab));
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.toggle('active', el.id === `tab-${tab}`));
 }
 
 // ─── File upload ──────────────────────────────────────────────────────────────
@@ -1081,37 +968,25 @@ document.getElementById('fileInput').addEventListener('change', async e => {
   try {
     const rows = await readFile(file);
     goals = parseGoals(rows);
-    if (goals.length === 0) {
-      alert('Nenhum goal encontrado. Verifique se o arquivo tem as colunas corretas.');
-      e.target.value = ''; return;
-    }
+    if (!goals.length) { alert('Nenhum goal encontrado. Verifique se o arquivo tem as colunas corretas.'); e.target.value=''; return; }
     selectedCycle = 'all';
     currentWeek = detectCurrentWeek(goals);
     document.getElementById('weekSelector').value = currentWeek;
     populateCycleSelector();
     const now = new Date();
-    document.getElementById('lastUpdated').textContent =
-      `Atualizado às ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    document.getElementById('lastUpdated').textContent = `Atualizado às ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
     document.getElementById('welcomeScreen').style.display = 'none';
     renderDashboard();
-  } catch (err) {
-    alert('Erro ao processar o arquivo: ' + err.message);
-    console.error(err);
-  }
+  } catch (err) { alert('Erro ao processar o arquivo: ' + err.message); console.error(err); }
   e.target.value = '';
 });
 
-// ─── Cycle selector ───────────────────────────────────────────────────────────
-document.getElementById('cycleSelector').addEventListener('change', e => {
-  selectedCycle = e.target.value;
-  if (goals.length > 0) renderDashboard();
-});
+// ─── Selectors ────────────────────────────────────────────────────────────────
+document.getElementById('cycleSelector').addEventListener('change', e => { selectedCycle = e.target.value; if (goals.length) renderDashboard(); });
+document.getElementById('weekSelector').addEventListener('change', e => { currentWeek = parseInt(e.target.value); if (goals.length) renderDashboard(); });
 
-// ─── Week selector ────────────────────────────────────────────────────────────
-document.getElementById('weekSelector').addEventListener('change', e => {
-  currentWeek = parseInt(e.target.value);
-  if (goals.length > 0) renderDashboard();
-});
+// ─── Init ─────────────────────────────────────────────────────────────────────
+updateApiKeyBtn();
 </script>
 </body>
 </html>
