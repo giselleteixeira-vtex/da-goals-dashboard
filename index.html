@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<!-- saved from url=(0066)file:///C:/Users/giselle.souza/Downloads/pm-goals-dashboard_4.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PM Goals Dashboard · D&amp;A 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f4f0; color: #1a1a18; min-height: 100vh; }
+
+  .header { background: #fff; border-bottom: 1px solid #e0dfd8; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; gap: 12px; flex-wrap: wrap; }
+  .header-left h1 { font-size: 15px; font-weight: 600; }
+  .header-left .cycle { font-size: 12px; color: #888780; margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .sync-btn { font-size: 12px; padding: 6px 12px; border-radius: 7px; border: 1px solid #e0dfd8; background: #fff; cursor: pointer; color: #555; display: flex; align-items: center; gap: 5px; transition: all 0.1s; }
+  .sync-btn:hover { background: #f5f4f0; }
+  .sync-btn:disabled { opacity: 0.5; cursor: default; }
+  .sync-status { font-size: 11px; color: #aaa; }
+  .sync-status.ok { color: #3b6d11; }
+  .sync-status.err { color: #a32d2d; }
+
+  .layout { display: grid; grid-template-columns: 210px 1fr; min-height: calc(100vh - 57px); }
+  .sidebar { background: #fff; border-right: 1px solid #e0dfd8; padding: 16px 0; position: sticky; top: 57px; height: calc(100vh - 57px); overflow-y: auto; }
+  .sidebar-section { padding: 8px 16px 4px; font-size: 10px; font-weight: 600; color: #bbb; text-transform: uppercase; letter-spacing: 0.08em; }
+  .nav-btn { display: block; width: 100%; text-align: left; padding: 8px 16px; font-size: 13px; background: none; border: none; cursor: pointer; color: #555; border-left: 2px solid transparent; transition: all 0.1s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nav-btn:hover { background: #f5f4f0; color: #1a1a18; }
+  .nav-btn.active { background: #f0efe8; color: #1a1a18; font-weight: 500; border-left-color: #1a1a18; }
+  .nav-btn.marcela { color: #534ab7; }
+  .nav-btn.marcela.active { border-left-color: #534ab7; background: #eeedfe; color: #3c3489; }
+  .nav-badge { float: right; font-size: 10px; padding: 1px 6px; border-radius: 10px; background: #f0efe8; color: #888; margin-left: 4px; }
+  .nav-badge.red { background: #fcebeb; color: #a32d2d; }
+  .nav-badge.yellow { background: #faeeda; color: #ba7517; }
+
+  .main { padding: 24px 28px; max-width: 940px; }
+
+  .loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 12px; }
+  .loading-spinner { width: 28px; height: 28px; border: 2px solid #e0dfd8; border-top-color: #1a1a18; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 13px; color: #888; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
+  .stat-card { background: #fff; border: 1px solid #e0dfd8; border-radius: 10px; padding: 14px 16px; }
+  .stat-label { font-size: 11px; color: #888780; margin-bottom: 4px; }
+  .stat-value { font-size: 26px; font-weight: 600; }
+  .stat-value.c-total { color: #1a1a18; }
+  .stat-value.c-green { color: #3b6d11; }
+  .stat-value.c-yellow { color: #ba7517; }
+  .stat-value.c-red { color: #a32d2d; }
+
+  .section-title { font-size: 13px; font-weight: 600; color: #1a1a18; margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
+  .section-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+  .goal-card { background: #fff; border: 1px solid #e0dfd8; border-radius: 10px; padding: 13px 15px; margin-bottom: 8px; }
+  .goal-card.risk { border-left: 3px solid #ef9f27; }
+  .goal-card.blocked { border-left: 3px solid #e24b4a; }
+  .goal-card.abandoned { border-left: 3px solid #b4b2a9; }
+  .goal-card.missing { border-left: 3px solid #e24b4a; background: #fffaf9; }
+  .goal-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .goal-body { flex: 1; min-width: 0; }
+  .goal-meta { font-size: 11px; color: #888780; margin-bottom: 3px; }
+  .goal-name { font-size: 13px; font-weight: 500; color: #1a1a18; line-height: 1.4; }
+  .goal-update { font-size: 12px; color: #555; margin-top: 5px; line-height: 1.5; }
+  .goal-no-update { font-size: 12px; color: #a32d2d; margin-top: 4px; font-style: italic; }
+  .goal-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .badge-green { background: #eaf3de; color: #3b6d11; }
+  .badge-yellow { background: #faeeda; color: #ba7517; }
+  .badge-red { background: #fcebeb; color: #a32d2d; }
+  .badge-done { background: #e1f5ee; color: #0f6e56; }
+  .badge-abandoned { background: #f1efe8; color: #5f5e5a; }
+  .badge-none { background: #f1efe8; color: #888780; }
+
+  .week-dots { display: flex; gap: 3px; margin-top: 8px; align-items: center; }
+  .week-dot { width: 20px; height: 5px; border-radius: 2px; }
+  .wd-green { background: #c0dd97; }
+  .wd-yellow { background: #fac775; }
+  .wd-red { background: #f09595; }
+  .wd-done { background: #9fe1cb; }
+  .wd-abandoned { background: #d3d1c7; }
+  .wd-empty { background: #e8e7e0; }
+  .week-label { font-size: 10px; color: #bbb; margin-left: 4px; }
+
+  .card-btn { font-size: 11px; padding: 3px 9px; border-radius: 6px; border: 1px solid #e0dfd8; background: #fff; cursor: pointer; color: #555; white-space: nowrap; transition: all 0.1s; }
+  .card-btn:hover { background: #f5f4f0; }
+  .card-btn:disabled { opacity: 0.45; cursor: default; }
+  .card-btn.deep { border-color: #c5c1f5; color: #534ab7; }
+  .card-btn.deep:hover { background: #eeedfe; }
+
+  .expand-box { border-radius: 8px; padding: 11px 13px; margin-top: 8px; font-size: 12px; line-height: 1.65; }
+  .expand-box.plain { background: #f5f4f0; color: #444; }
+  .expand-box.deep { background: #f0effe; border: 1px solid #d4d0f7; color: #2b2560; }
+  .expand-box-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; color: #888; }
+  .expand-box.deep .expand-box-label { color: #7f77dd; }
+  .expand-box h3 { font-size: 12px; font-weight: 600; margin: 10px 0 4px; }
+  .expand-box h3:first-child { margin-top: 0; }
+  .expand-box p { margin-bottom: 3px; }
+  .expand-box li { margin: 2px 0 2px 14px; }
+
+  .missing-strip { background: #fffaf9; border: 1px solid #f7c1c1; border-radius: 8px; padding: 9px 13px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .missing-owner { font-size: 12px; font-weight: 600; color: #a32d2d; flex-shrink: 0; }
+  .missing-goal-text { font-size: 11px; color: #c05050; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .team-section { margin-bottom: 22px; }
+  .team-label { font-size: 10px; font-weight: 700; color: #bbb; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #e8e7e0; }
+
+  .tool-section { background: #fff; border: 1px solid #e0dfd8; border-radius: 12px; padding: 20px; }
+  .tool-intro { font-size: 13px; color: #555; margin-bottom: 14px; line-height: 1.6; }
+  .run-btn { padding: 9px 20px; background: #1a1a18; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity 0.1s; }
+  .run-btn:hover { opacity: 0.85; }
+  .run-btn:disabled { opacity: 0.4; cursor: default; }
+  .marcela-run-btn { padding: 9px 20px; background: #534ab7; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity 0.1s; }
+  .marcela-run-btn:hover { opacity: 0.85; }
+  .marcela-run-btn:disabled { opacity: 0.4; cursor: default; }
+  .tool-result { margin-top: 18px; border-top: 1px solid #e8e7e0; padding-top: 16px; }
+  .tool-result h3 { font-size: 13px; font-weight: 600; color: #1a1a18; margin: 14px 0 5px; }
+  .tool-result h3:first-child { margin-top: 0; }
+  .tool-result p { font-size: 13px; color: #444; line-height: 1.6; margin-bottom: 3px; }
+  .tool-result li { font-size: 13px; color: #444; line-height: 1.6; margin: 2px 0 2px 14px; }
+
+  .marcela-header-box { background: linear-gradient(135deg, #eeedfe 0%, #f5f4f0 100%); border: 1px solid #afa9ec; border-radius: 10px; padding: 16px 18px; margin-bottom: 18px; }
+  .marcela-title { font-size: 14px; font-weight: 600; color: #3c3489; margin-bottom: 4px; }
+  .marcela-subtitle { font-size: 12px; color: #7f77dd; line-height: 1.5; }
+  .marcela-tags { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .marcela-tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: #eeedfe; color: #534ab7; font-weight: 600; }
+  .inline-loading { font-size: 12px; color: #888; font-style: italic; padding: 8px 0; }
+
+  @media (max-width: 720px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; display: flex; flex-wrap: wrap; padding: 10px; gap: 4px; border-right: none; border-bottom: 1px solid #e0dfd8; }
+    .nav-btn { width: auto; border-left: none; border-radius: 6px; border: 1px solid #e0dfd8; padding: 5px 10px; font-size: 12px; }
+    .nav-btn.active { border-color: #1a1a18; }
+    .sidebar-section { display: none; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .main { padding: 14px; }
+    .header { padding: 12px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Goals Dashboard · D&amp;A 2026</h1>
+    <div class="cycle" id="cycle-label">Carregando…</div>
+  </div>
+  <div class="header-right">
+    <span class="sync-status err" id="sync-status">Erro: Failed to fetch</span>
+    <button class="sync-btn" id="sync-btn" onclick="loadFromSheets()">↻ Atualizar dados</button>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-section">Views</div>
+    <button class="nav-btn active" onclick="showTab(&#39;overview&#39;)">Overview <span class="nav-badge red" id="badge-overview"></span></button>
+    <button class="nav-btn" onclick="showTab(&#39;missing&#39;)">Sem update <span class="nav-badge red" id="badge-missing"></span></button>
+    <button class="nav-btn" onclick="showTab(&#39;risk&#39;)">At Risk <span class="nav-badge yellow" id="badge-risk"></span></button>
+    <button class="nav-btn" onclick="showTab(&#39;all&#39;)">Todos os Goals <span class="nav-badge" id="badge-all"></span></button>
+    <div class="sidebar-section" style="margin-top:10px;">AI Tools</div>
+    <button class="nav-btn" onclick="showTab(&#39;analysis&#39;)">AI Analysis ✦</button>
+    <button class="nav-btn marcela" onclick="showTab(&#39;marcela&#39;)">Marcela Mode ✦</button>
+  </nav>
+
+  <main class="main">
+    <div id="tab-overview" data-rendered="" style="display: block;"><div class="loading-screen"><div style="font-size:13px;color:#a32d2d">Não foi possível carregar.<br><small>Failed to fetch</small></div><button class="run-btn" onclick="loadFromSheets()" style="margin-top:12px">Tentar novamente</button></div></div>
+    <div id="tab-missing" style="display:none" data-rendered=""></div>
+    <div id="tab-risk" style="display:none" data-rendered=""></div>
+    <div id="tab-all" style="display:none" data-rendered=""></div>
+    <div id="tab-analysis" style="display:none" data-rendered=""></div>
+    <div id="tab-marcela" style="display:none" data-rendered=""></div>
+  </main>
+</div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────────
+const SHEET_ID  = '13jJO1S_DnRbtfuqEsKL6PYOsmEQX9WvGXoXRSQhef7I';
+const SHEET_TAB = 'Q2C1'; // ← mude aqui a cada ciclo (ex: Q2C2, Q3C1…)
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let DATA = [];
+let CURRENT_WEEK = 4;
+let CYCLE_NAME   = 'Q2-C1';
+const aiCache = {};
+
+// ── SHEETS LOADER ──────────────────────────────────────────────────────────
+async function loadFromSheets() {
+  const btn    = document.getElementById('sync-btn');
+  const status = document.getElementById('sync-status');
+  btn.disabled = true;
+  btn.textContent = '↻ Carregando…';
+  status.className = 'sync-status';
+  status.textContent = '';
+
+  // Reset rendered tabs
+  ['overview','missing','risk','all','analysis','marcela'].forEach(t => {
+    const el = document.getElementById('tab-' + t);
+    if (el) { el.dataset.rendered = ''; el.innerHTML = ''; }
+  });
+
+  document.getElementById('tab-overview').style.display = 'block';
+  document.getElementById('tab-overview').innerHTML =
+    '<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Buscando dados do Google Sheets…</div></div>';
+
+  try {
+    const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIrZMPY27RCdqsKL8AbARpZysFzgphs6ieXdtCTShP0rSgRKL6MTbYLQWdl9KXCO75BTg_da8zKiG9/pub?gid=1663621896&single=true&output=csv';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const csv = await res.text();
+    parseCSV(csv);
+
+    const now = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    status.textContent = 'Atualizado às ' + now;
+    status.className = 'sync-status ok';
+    document.getElementById('cycle-label').textContent = CYCLE_NAME + ' · Semana ' + CURRENT_WEEK + ' de 6';
+    updateBadges();
+    showTab('overview');
+  } catch(e) {
+    status.textContent = 'Erro: ' + e.message;
+    status.className = 'sync-status err';
+    document.getElementById('tab-overview').innerHTML =
+      '<div class="loading-screen"><div style="font-size:13px;color:#a32d2d">Não foi possível carregar.<br><small>' + e.message + '</small></div>' +
+      '<button class="run-btn" onclick="loadFromSheets()" style="margin-top:12px">Tentar novamente</button></div>';
+  }
+  btn.disabled = false;
+  btn.textContent = '↻ Atualizar dados';
+}
+
+function parseRow(line) {
+  const cols = []; let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; continue; }
+    if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
+    cur += c;
+  }
+  cols.push(cur.trim());
+  return cols;
+}
+
+function parseCSV(csv) {
+  const lines = csv.split('\n').filter(l => l.trim());
+  const headers = parseRow(lines[0]).map(h => h.toLowerCase().trim());
+
+  const ci = name => headers.findIndex(h => h.includes(name));
+  const iOwner    = ci('owner');
+  const iTeam     = ci('team');
+  const iGoal     = ci('goal');
+  const iOutput   = ci('output');
+  const iPriority = ci('priority');
+  const iCurrent  = ci('current');
+
+  function findWeekCols(w) {
+    const s = headers.findIndex(h => h === 'w'+w+' status' || h === 'w'+w+'status' || (h.includes('w'+w) && h.includes('status')));
+    const u = headers.findIndex(h => h === 'w'+w+' update' || h === 'w'+w+'update' || (h.includes('w'+w) && h.includes('update')));
+    return {s, u};
+  }
+  const weekCols = [1,2,3,4,5,6].map(w => findWeekCols(w));
+
+  let detectedWeek = 1;
+  DATA = [];
+
+  for (let r = 1; r < lines.length; r++) {
+    const row = parseRow(lines[r]);
+    if (!row[iGoal] || !row[iOwner]) continue;
+    const goal = {
+      owner:    row[iOwner]    || '',
+      team:     row[iTeam]     || '',
+      goal:     row[iGoal]     || '',
+      output:   iOutput   >= 0 ? (row[iOutput]   || '') : '',
+      priority: iPriority >= 0 ? (row[iPriority] || '') : '',
+      current:  iCurrent  >= 0 ? (row[iCurrent]  || '') : '',
+    };
+    for (let w = 1; w <= 6; w++) {
+      const wc = weekCols[w-1];
+      const s = wc.s >= 0 ? (row[wc.s] || '').trim() : '';
+      const u = wc.u >= 0 ? (row[wc.u] || '').trim() : '';
+      goal['w'+w] = {s, u};
+      if (s && w > detectedWeek) detectedWeek = w;
+    }
+    DATA.push(goal);
+  }
+  CURRENT_WEEK = detectedWeek;
+  CYCLE_NAME   = SHEET_TAB.replace(/([A-Z])(\d)/g, '$1$2').toUpperCase();
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+const STATUS_CFG = {
+  'Green':      {badge:'badge-green',   dot:'wd-green',    label:'On track'},
+  'Yellow':     {badge:'badge-yellow',  dot:'wd-yellow',   label:'At risk'},
+  'Red':        {badge:'badge-red',     dot:'wd-red',      label:'Blocked'},
+  'Done':       {badge:'badge-done',    dot:'wd-done',     label:'Done'},
+  'Abandoned':  {badge:'badge-abandoned',dot:'wd-abandoned',label:'Abandoned'},
+  'Not started':{badge:'badge-none',    dot:'wd-empty',    label:'Not started'},
+  '':           {badge:'badge-none',    dot:'wd-empty',    label:'Sem update'},
+};
+const FILLER = ['','-','arthur to update','leandro to update','oncall','on call','to be defined','to update'];
+const getW       = (g,n) => g['w'+n] || {s:'',u:''};
+const isMissing  = g => { const w = getW(g,CURRENT_WEEK); return !w.u || FILLER.includes(w.u.toLowerCase()); };
+const isRisk     = g => ['Yellow','Red','Abandoned'].includes(g.current) ||
+                        (g.current==='Not started' && !getW(g,3).u && !getW(g,2).u && !getW(g,1).u);
+const getMissing = () => DATA.filter(isMissing);
+const getAtRisk  = () => DATA.filter(isRisk);
+const getOnTrack = () => DATA.filter(g => ['Green','Done'].includes(g.current));
+const escJs      = s  => (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' ').slice(0,300);
+
+function badge(status) {
+  const c = STATUS_CFG[status] || STATUS_CFG[''];
+  return '<span class="badge ' + c.badge + '">' + c.label + '</span>';
+}
+
+function weekDots(g) {
+  let h = '<div class="week-dots">';
+  for (let i = 1; i <= 6; i++) {
+    const s = getW(g,i).s;
+    const c = (STATUS_CFG[s] || STATUS_CFG['']).dot;
+    const outline = i === CURRENT_WEEK ? ' style="outline:2px solid #888;outline-offset:1px"' : '';
+    h += '<div class="week-dot ' + c + '"' + outline + ' title="Semana ' + i + ': ' + (s||'sem status') + '"></div>';
+  }
+  return h + '<span class="week-label">S1–S6</span></div>';
+}
+
+function goalCard(g, extraClass) {
+  extraClass = extraClass || '';
+  const key = btoa(encodeURIComponent((g.owner+g.goal).slice(0,60))).replace(/[^a-zA-Z0-9]/g,'').slice(0,28);
+  const w = getW(g, CURRENT_WEEK);
+  const miss = isMissing(g);
+
+  // Find latest non-empty update
+  let latestU = '';
+  for (let n = CURRENT_WEEK; n >= 1; n--) {
+    const u = getW(g,n).u;
+    if (u && !FILLER.includes(u.toLowerCase())) { latestU = u; break; }
+  }
+
+  const allUpdates = [1,2,3,4,5,6].map(n => getW(g,n).u).filter(u => u && !FILLER.includes(u.toLowerCase())).join(' | ');
+
+  const updateHtml = miss
+    ? '<div class="goal-no-update">Sem update na semana ' + CURRENT_WEEK + '</div>'
+    : w.u ? '<div class="goal-update">' + w.u.slice(0,260) + (w.u.length>260?'…':'') + '</div>' : '';
+
+  return '<div class="goal-card ' + extraClass + '" id="card-' + key + '">' +
+    '<div class="goal-row">' +
+      '<div class="goal-body">' +
+        '<div class="goal-meta">' + g.owner + (g.team?' · '+g.team:'') + (g.priority?' · '+g.priority:'') + '</div>' +
+        '<div class="goal-name">' + g.goal + '</div>' +
+        updateHtml +
+        '<div id="expand-' + key + '"></div>' +
+      '</div>' +
+      '<div class="goal-actions">' +
+        badge(g.current) +
+        '<button class="card-btn" onclick="runTranslate(\'' + key + '\',\'' + escJs(g.owner) + '\',\'' + escJs(g.goal) + '\',\'' + escJs(latestU) + '\',\'' + g.current + '\')">Traduzir</button>' +
+        '<button class="card-btn deep" onclick="runDeepDive(\'' + key + '\',\'' + escJs(g.owner) + '\',\'' + escJs(g.goal) + '\',\'' + escJs(g.output) + '\',\'' + escJs(allUpdates) + '\',\'' + g.current + '\')">Deep dive ↗</button>' +
+      '</div>' +
+    '</div>' +
+    weekDots(g) +
+  '</div>';
+}
+
+// ── AI CALLS ───────────────────────────────────────────────────────────────
+async function callClaude(prompt, cacheKey) {
+  if (aiCache[cacheKey]) return aiCache[cacheKey];
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user', content:prompt}]})
+  });
+  const data = await res.json();
+  const text = data.content?.map(c => c.text||'').join('') || 'Sem resposta';
+  aiCache[cacheKey] = text;
+  return text;
+}
+
+async function runTranslate(key, owner, goal, lastUpdate, status) {
+  const box  = document.getElementById('expand-' + key);
+  const btns = document.querySelectorAll('#card-' + key + ' .card-btn');
+  if (box.dataset.mode === 'translate') { box.dataset.mode = ''; box.innerHTML = ''; return; }
+  btns.forEach(b => b.disabled = true);
+  box.innerHTML = '<div class="inline-loading">Traduzindo…</div>';
+  try {
+    const text = await callClaude(
+      'Traduza este goal técnico para linguagem simples para um stakeholder não-técnico. Máximo 3-4 frases. Sem jargão.\n\nGoal: ' + goal + '\nOwner: ' + owner + '\nÚltimo update: ' + (lastUpdate||'Sem updates') + '\nStatus: ' + status + '\n\nExplique: (1) o que estão tentando fazer em termos simples, (2) onde está agora, (3) algo a observar.',
+      'translate-' + key
+    );
+    box.dataset.mode = 'translate';
+    box.innerHTML = '<div class="expand-box plain"><div class="expand-box-label">Linguagem simples</div>' + text + '</div>';
+  } catch(e) {
+    box.innerHTML = '<div class="expand-box plain" style="color:#a32d2d">Erro: ' + e.message + '</div>';
+  }
+  btns.forEach(b => b.disabled = false);
+}
+
+async function runDeepDive(key, owner, goal, output, allUpdates, status) {
+  const box  = document.getElementById('expand-' + key);
+  const btns = document.querySelectorAll('#card-' + key + ' .card-btn');
+  if (box.dataset.mode === 'deep') { box.dataset.mode = ''; box.innerHTML = ''; return; }
+  btns.forEach(b => b.disabled = true);
+  box.innerHTML = '<div class="inline-loading">Fazendo deep dive…</div>';
+  try {
+    const text = await callClaude(
+      'Você está ajudando uma PM a entender um goal técnico do time de dados. Faça um deep dive explicando:\n\n' +
+      '1. **O que esse goal significa** — explique cada componente técnico mencionado (ex: o que é "Iceberg", "DAG", "EKS", "Lakehouse", etc.) em linguagem acessível para quem não é engenheira.\n' +
+      '2. **Como as peças se conectam** — como os componentes se relacionam entre si nesse contexto.\n' +
+      '3. **Por que isso importa para o negócio ou produto** — qual é o impacto real se isso for feito (ou não).\n' +
+      '4. **O que pode dar errado** — riscos técnicos ou dependências que uma PM deveria monitorar.\n\n' +
+      'Goal: ' + goal + '\nOutput esperado: ' + (output||'não especificado') + '\nOwner: ' + owner + '\nStatus: ' + status + '\nHistórico de updates: ' + (allUpdates||'nenhum') + '\n\n' +
+      'Seja claro e direto. Quando usar um termo técnico, explique-o rapidamente entre parênteses.',
+      'deep-' + key
+    );
+    box.dataset.mode = 'deep';
+    box.innerHTML = '<div class="expand-box deep"><div class="expand-box-label">Deep dive</div>' + renderMd(text) + '</div>';
+  } catch(e) {
+    box.innerHTML = '<div class="expand-box deep" style="color:#a32d2d">Erro: ' + e.message + '</div>';
+  }
+  btns.forEach(b => b.disabled = false);
+}
+
+async function runAnalysis() {
+  const btn    = document.getElementById('analysis-btn');
+  const result = document.getElementById('analysis-result');
+  btn.disabled = true; btn.textContent = 'Analisando…';
+  result.innerHTML = '<div class="inline-loading" style="padding:16px 0">Analisando todos os goals…</div>';
+  try {
+    const summary = DATA.map(g => ({
+      owner: g.owner, team: g.team, goal: g.goal, currentStatus: g.current,
+      weekUpdates: [1,2,3,4,5,6].map(n => ({week:n, status:getW(g,n).s, update:getW(g,n).u})).filter(w => w.status||w.update)
+    }));
+    const text = await callClaude(
+      'Você está ajudando uma PM a analisar o ciclo ' + CYCLE_NAME + ', semana ' + CURRENT_WEEK + ' de 6.\n\n' +
+      'Produza um briefing de PM com exatamente estas 4 seções:\n\n' +
+      '**1. UPDATES NÃO ENVIADOS**\nListe goals onde o owner não deu update significativo na semana ' + CURRENT_WEEK + '.\n\n' +
+      '**2. ITENS EM RISCO OU PREOCUPANTES**\nIdentifique goals com status Yellow/Red, blockers, estagnação ou updates vagos. Explique POR QUÊ em 1-2 frases.\n\n' +
+      '**3. O QUE ESTÁ INDO BEM**\nDestaque 3-5 goals com boa evolução. Seja específico.\n\n' +
+      '**4. ACTION ITEMS PARA A PM**\nSugira 3-5 ações concretas para essa semana.\n\n' +
+      'Responda em português. Direto ao ponto.\n\nDATA:\n' + JSON.stringify(summary, null, 2),
+      'full-analysis'
+    );
+    result.innerHTML = '<div class="tool-result">' + renderMd(text) + '</div>';
+  } catch(e) {
+    result.innerHTML = '<p style="color:#a32d2d;padding-top:12px">Erro: ' + e.message + '</p>';
+  }
+  btn.disabled = false; btn.textContent = 'Rodar análise ↗';
+}
+
+async function runMarcela() {
+  const btn    = document.getElementById('marcela-btn');
+  const result = document.getElementById('marcela-result');
+  btn.disabled = true; btn.textContent = 'Analisando…';
+  result.innerHTML = '<div class="inline-loading" style="padding:16px 0">Aplicando a lente da Marcela…</div>';
+  try {
+    const summary = DATA.map(g => ({
+      owner:g.owner, team:g.team, goal:g.goal, currentStatus:g.current, priority:g.priority,
+      weekUpdates:[1,2,3,4,5,6].map(n=>({week:n,status:getW(g,n).s,update:getW(g,n).u})).filter(w=>w.status||w.update)
+    }));
+    const text = await callClaude(
+      'Você está simulando a perspectiva da Marcela, uma líder sênior com forte olhar de product management e governança. Com base em padrões observados em diversas reuniões, a Marcela consistentemente:\n\n' +
+      '1. Pergunta "qual é o valor de negócio?" — pausa em outputs técnicos e pergunta o que significa para o cliente final.\n' +
+      '2. Identifica ownership indefinido — quando um goal tem muitos envolvidos mas nenhum dono final.\n' +
+      '3. Lê vagueza como risco — timing indefinido, escopo nebuloso, owner ausente = sinal de risco.\n' +
+      '4. Pergunta "o que acontece se isso atrasar?" — força pensar em tradeoffs e consequências.\n' +
+      '5. Questiona dependências de terceiros — quem está acompanhando? Qual é o plano B?\n' +
+      '6. Exige critério de done claro — baixa tolerância para goals sem artefato verificável.\n' +
+      '7. Pergunta "qual é a versão mais simples que já entrega valor?" — desafia o time a pensar em slices menores e releasable, evita big-bang delivery.\n' +
+      '8. Propõe realocação proativamente — quando algo está parado ou de baixo valor, prefere realocar a esperar o ciclo terminar.\n\n' +
+      'Analise os goals do ciclo ' + CYCLE_NAME + ' e produza uma resposta em português estruturada EXATAMENTE assim:\n\n' +
+      '**🔍 PERGUNTAS QUE A MARCELA FARIA**\nPara cada preocupação relevante, escreva a pergunta exata no estilo direto dela. Formato: [owner/goal] "Pergunta entre aspas" — nota breve sobre por que ela perguntaria isso.\n\n' +
+      '**⚠️ SINAIS DE RISCO QUE ELA IDENTIFICARIA**\nListe 4-6 sinais: outputs vagos, owners faltando, blockers de terceiros, goals estagnados, ausência de critério de done.\n\n' +
+      '**✂️ "QUAL É A VERSÃO MAIS SIMPLES?"**\nIdentifique 3-4 goals onde ela desafiaria o time a definir uma versão menor já releasable. Para cada um, sugira como seria esse MVP/slice.\n\n' +
+      '**👤 QUEM PRECISA DE UMA CONVERSA**\nListe 2-3 pessoas que ela buscaria ativamente essa semana e por quê.\n\n' +
+      'Direto, no tom dela. Ela não é grossa mas não enrola.\n\nDATA:\n' + JSON.stringify(summary, null, 2),
+      'marcela-analysis'
+    );
+    result.innerHTML = '<div class="tool-result">' + renderMd(text) + '</div>';
+  } catch(e) {
+    result.innerHTML = '<p style="color:#a32d2d;padding-top:12px">Erro: ' + e.message + '</p>';
+  }
+  btn.disabled = false; btn.textContent = 'Rodar Marcela Mode ↗';
+}
+
+// ── MARKDOWN ───────────────────────────────────────────────────────────────
+function renderMd(text) {
+  return text.split('\n').map(line => {
+    if (/^\*\*[^*]/.test(line) && line.endsWith('**')) return '<h3>' + line.replace(/\*\*/g,'') + '</h3>';
+    if (/^#{1,3}\s/.test(line)) return '<h3>' + line.replace(/^#+\s/,'') + '</h3>';
+    if (line.startsWith('- ') || line.startsWith('• ')) return '<li>' + line.slice(2).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>') + '</li>';
+    if (line.trim() === '') return '<br>';
+    return '<p>' + line.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>') + '</p>';
+  }).join('');
+}
+
+// ── RENDERERS ──────────────────────────────────────────────────────────────
+function renderOverview() {
+  const missing = getMissing(), atRisk = getAtRisk(), onTrack = getOnTrack();
+  let h = '<div class="stats-grid">' +
+    '<div class="stat-card"><div class="stat-label">Total goals</div><div class="stat-value c-total">' + DATA.length + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">On track</div><div class="stat-value c-green">' + onTrack.length + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">At risk</div><div class="stat-value c-yellow">' + atRisk.length + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Sem update S' + CURRENT_WEEK + '</div><div class="stat-value c-red">' + missing.length + '</div></div>' +
+  '</div>';
+
+  if (missing.length > 0) {
+    h += '<div class="section-title"><span class="section-dot" style="background:#e24b4a"></span>Sem update na semana ' + CURRENT_WEEK + '</div>';
+    missing.slice(0,7).forEach(g => {
+      h += '<div class="missing-strip"><span class="missing-owner">' + g.owner + '</span><span class="missing-goal-text">' + g.goal.slice(0,85) + (g.goal.length>85?'…':'') + '</span></div>';
+    });
+    if (missing.length > 7) h += '<p style="font-size:12px;color:#aaa;margin:4px 0 16px">+' + (missing.length-7) + ' mais. Ver aba "Sem update".</p>';
+    else h += '<div style="height:16px"></div>';
+  }
+
+  if (atRisk.length > 0) {
+    h += '<div class="section-title"><span class="section-dot" style="background:#ef9f27"></span>At risk</div>';
+    atRisk.forEach(g => h += goalCard(g, g.current==='Abandoned'?'abandoned':g.current==='Red'?'blocked':'risk'));
+  }
+  return h;
+}
+
+function renderMissing() {
+  const missing = getMissing();
+  let h = '<p style="font-size:13px;color:#888;margin-bottom:14px">' + missing.length + ' goals sem update significativo na semana ' + CURRENT_WEEK + '</p>';
+  missing.forEach(g => h += goalCard(g, 'missing'));
+  return h;
+}
+
+function renderRisk() {
+  const atRisk = getAtRisk();
+  let h = '<p style="font-size:13px;color:#888;margin-bottom:14px">' + atRisk.length + ' goals com status Yellow/Red/Abandoned ou estagnados</p>';
+  atRisk.forEach(g => h += goalCard(g, g.current==='Abandoned'?'abandoned':g.current==='Red'?'blocked':'risk'));
+  return h;
+}
+
+function renderAll() {
+  const teams = [...new Set(DATA.map(g => g.team))].filter(Boolean);
+  let h = '';
+  teams.forEach(team => {
+    const goals = DATA.filter(g => g.team === team);
+    if (!goals.length) return;
+    h += '<div class="team-section"><div class="team-label">' + team + '</div>';
+    goals.forEach(g => h += goalCard(g, isMissing(g)?'missing':''));
+    h += '</div>';
+  });
+  return h;
+}
+
+function renderAnalysis() {
+  return '<div class="tool-section">' +
+    '<p class="tool-intro">Gera um briefing de PM completo — quem não atualizou, o que está em risco, o que está indo bem, e o que fazer essa semana.</p>' +
+    '<button class="run-btn" id="analysis-btn" onclick="runAnalysis()">Rodar análise ↗</button>' +
+    '<div id="analysis-result"></div>' +
+  '</div>';
+}
+
+function renderMarcela() {
+  return '<div>' +
+    '<div class="marcela-header-box">' +
+      '<div class="marcela-title">✦ Marcela Mode</div>' +
+      '<div class="marcela-subtitle">Simula o olhar da Marcela nos goals do ciclo — perguntas de PM e governança, versões mais simples, sinais de risco, e quem precisa de uma conversa.</div>' +
+      '<div class="marcela-tags">' +
+        '<span class="marcela-tag">valor de negócio</span>' +
+        '<span class="marcela-tag">ownership claro</span>' +
+        '<span class="marcela-tag">vagueza = risco</span>' +
+        '<span class="marcela-tag">versão mais simples</span>' +
+        '<span class="marcela-tag">o que é releasable?</span>' +
+        '<span class="marcela-tag">dependências de terceiros</span>' +
+        '<span class="marcela-tag">realocação proativa</span>' +
+      '</div>' +
+    '</div>' +
+    '<button class="marcela-run-btn" id="marcela-btn" onclick="runMarcela()">Rodar Marcela Mode ↗</button>' +
+    '<div id="marcela-result"></div>' +
+  '</div>';
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────────────────────
+function showTab(name) {
+  ['overview','missing','risk','all','analysis','marcela'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    const txt = b.textContent.trim();
+    const active =
+      (name==='overview'  && txt.startsWith('Overview'))  ||
+      (name==='missing'   && txt.startsWith('Sem'))        ||
+      (name==='risk'      && txt.startsWith('At'))         ||
+      (name==='all'       && txt.startsWith('Todos'))      ||
+      (name==='analysis'  && txt.startsWith('AI'))         ||
+      (name==='marcela'   && txt.startsWith('Marcela'));
+    b.classList.toggle('active', active);
+  });
+  const el = document.getElementById('tab-' + name);
+  if (el.dataset.rendered) return;
+  el.dataset.rendered = '1';
+  if      (name==='overview')  el.innerHTML = renderOverview();
+  else if (name==='missing')   el.innerHTML = renderMissing();
+  else if (name==='risk')      el.innerHTML = renderRisk();
+  else if (name==='all')       el.innerHTML = renderAll();
+  else if (name==='analysis')  el.innerHTML = renderAnalysis();
+  else if (name==='marcela')   el.innerHTML = renderMarcela();
+}
+
+function updateBadges() {
+  document.getElementById('badge-overview').textContent = getMissing().length;
+  document.getElementById('badge-missing').textContent  = getMissing().length;
+  document.getElementById('badge-risk').textContent     = getAtRisk().length;
+  document.getElementById('badge-all').textContent      = DATA.length;
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+loadFromSheets();
+</script>
+
+
+</body></html>
