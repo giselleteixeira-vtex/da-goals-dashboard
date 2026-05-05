@@ -2,991 +2,616 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Goals Dashboard · D&A 2026</title>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PM Goals Dashboard · D&A 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f3ef;--surface:#ffffff;--border:#e2e0d8;--border-soft:#ece9e0;
+  --text:#1c1b18;--text2:#6b6860;--text3:#a8a49c;
+  --green:#3b6d11;--green-bg:#edf5e6;
+  --yellow:#9a6500;--yellow-bg:#fdf3dc;
+  --red:#a32d2d;--red-bg:#fceaea;
+  --done:#0f6e56;--done-bg:#e4f5ef;
+  --gray:#6b6860;--gray-bg:#f0ede6;
+  --purple:#5046a8;--purple-bg:#eeedf8;--purple-bd:#c4c0f0;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-    :root {
-      --bg: #f8fafc;
-      --surface: #ffffff;
-      --border: #e2e8f0;
-      --text: #1e293b;
-      --text-muted: #64748b;
-      --text-subtle: #94a3b8;
-      --green: #16a34a; --green-bg: #dcfce7;
-      --yellow: #a16207; --yellow-bg: #fef9c3;
-      --red: #dc2626; --red-bg: #fee2e2;
-      --teal: #0d9488; --teal-bg: #ccfbf1;
-      --purple: #7e22ce; --purple-bg: #f3e8ff;
-      --gray: #4b5563; --gray-bg: #f3f4f6;
-      --header-height: 58px;
-      --sidebar-width: 196px;
-    }
+/* HEADER */
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:11px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;flex-wrap:wrap}
+.hdr h1{font-size:14px;font-weight:600;letter-spacing:-0.2px}
+.hdr-sub{font-size:11px;color:var(--text3);margin-top:1px;font-family:'DM Mono',monospace}
+.hdr-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wlbl{font-size:11px;color:var(--text2);display:flex;align-items:center;gap:5px}
+.wlbl select{font-size:11px;padding:3px 7px;border-radius:6px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-family:'DM Mono',monospace;color:var(--text)}
+.hbtn{font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);cursor:pointer;color:var(--text2);transition:all .15s;font-family:'DM Sans',sans-serif}
+.hbtn:hover{background:var(--bg);color:var(--text)}
+.hbtn.primary{background:var(--text);color:var(--surface);border-color:var(--text)}
+.hbtn.primary:hover{opacity:.85}
+.smsg{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+.smsg.ok{color:var(--green)}.smsg.err{color:var(--red)}
 
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+/* LAYOUT */
+.body{display:flex;flex:1;overflow:hidden}
+.sidebar{width:185px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:12px 0;overflow-y:auto}
+.sg{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding:8px 14px 3px}
+.ni{display:block;width:100%;text-align:left;padding:7px 14px;font-size:12px;background:none;border:none;cursor:pointer;color:var(--text2);border-left:2px solid transparent;transition:all .1s;font-family:'DM Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ni:hover{background:var(--bg);color:var(--text)}
+.ni.on{background:var(--bg);color:var(--text);font-weight:500;border-left-color:var(--text)}
+.ni.marcela{color:var(--purple)}
+.ni.marcela.on{border-left-color:var(--purple);background:var(--purple-bg);color:#2e2880}
+.nb{float:right;font-size:9px;padding:1px 5px;border-radius:8px;background:var(--bg);color:var(--text3);margin-left:4px;font-family:'DM Mono',monospace}
+.nb.r{background:var(--red-bg);color:var(--red)}.nb.y{background:var(--yellow-bg);color:var(--yellow)}
 
-    /* ── Header ── */
-    .header { position: sticky; top: 0; z-index: 100; height: var(--header-height); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 12px; }
-    .header-title { font-size: 15px; font-weight: 700; white-space: nowrap; }
-    .header-divider { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
-    .header-cycle { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
-    .header-spacer { flex: 1; }
-    .h-selector { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); white-space: nowrap; }
-    .h-selector select { border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 13px; background: var(--surface); color: var(--text); cursor: pointer; outline: none; max-width: 160px; }
-    .h-selector select:focus { border-color: #93c5fd; }
-    .upload-btn { display: flex; align-items: center; gap: 5px; padding: 6px 13px; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background .15s; }
-    .upload-btn:hover { background: #1d4ed8; }
-    .api-key-btn { display: flex; align-items: center; gap: 5px; padding: 6px 11px; background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; cursor: pointer; white-space: nowrap; transition: all .15s; }
-    .api-key-btn:hover { border-color: #9333ea; color: #9333ea; }
-    .api-key-btn.configured { border-color: #86efac; color: var(--green); }
-    .last-updated { font-size: 11px; color: var(--text-subtle); white-space: nowrap; }
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:20px 24px}
 
-    /* ── Layout ── */
-    .layout { display: flex; align-items: flex-start; min-height: calc(100vh - var(--header-height)); }
+/* WELCOME */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:14px;text-align:center}
+.welcome h2{font-size:16px;font-weight:500}
+.welcome p{font-size:12px;color:var(--text2);line-height:1.7;max-width:300px}
+.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pbtn{padding:9px 20px;background:var(--text);color:var(--surface);border:none;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s}
+.pbtn:hover{opacity:.85}.pbtn:disabled{opacity:.4;cursor:default}
+.mpbtn{padding:9px 20px;background:var(--purple);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s}
+.mpbtn:hover{opacity:.85}.mpbtn:disabled{opacity:.4;cursor:default}
 
-    /* ── Sidebar ── */
-    .sidebar { width: var(--sidebar-width); background: var(--surface); border-right: 1px solid var(--border); padding: 12px 0; flex-shrink: 0; position: sticky; top: var(--header-height); max-height: calc(100vh - var(--header-height)); overflow-y: auto; }
-    .sidebar-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-subtle); padding: 14px 16px 4px; }
-    .sidebar-tab { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; cursor: pointer; font-size: 13.5px; color: var(--text-muted); border-left: 3px solid transparent; transition: all .12s; user-select: none; }
-    .sidebar-tab:hover { background: var(--bg); color: var(--text); }
-    .sidebar-tab.active { background: #eff6ff; color: #1d4ed8; border-left-color: #2563eb; font-weight: 600; }
-    .sidebar-tab.marcela-tab { color: #9333ea; }
-    .sidebar-tab.marcela-tab:hover { background: #faf5ff; color: var(--purple); }
-    .sidebar-tab.marcela-tab.active { background: #faf5ff; color: var(--purple); border-left-color: #9333ea; }
-    .sidebar-tab.marcela-tab.active .tab-badge { background: #e9d5ff; color: var(--purple); }
-    .tab-badge { font-size: 11px; background: var(--gray-bg); color: var(--gray); padding: 1px 7px; border-radius: 10px; font-weight: 600; min-width: 24px; text-align: center; }
-    .sidebar-tab.active .tab-badge { background: #dbeafe; color: #1d4ed8; }
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:13px 15px}
+.stat-l{font-size:10px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em}
+.stat-n{font-size:24px;font-weight:500;font-family:'DM Mono',monospace}
+.cg{color:var(--green)}.cy{color:var(--yellow)}.cr{color:var(--red)}
 
-    /* ── Main ── */
-    .main { flex: 1; padding: 24px 28px; min-width: 0; }
+/* SECTION TITLE */
+.sect{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin:18px 0 8px;display:flex;align-items:center;gap:6px}
+.sect:first-child{margin-top:0}
+.sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 
-    /* ── Welcome ── */
-    .welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 440px; text-align: center; gap: 14px; }
-    .welcome-icon { font-size: 52px; }
-    .welcome h2 { font-size: 22px; font-weight: 700; }
-    .welcome p { color: var(--text-muted); max-width: 380px; line-height: 1.65; font-size: 14px; }
-    .welcome-upload-btn { padding: 11px 26px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 6px; transition: background .15s; }
-    .welcome-upload-btn:hover { background: #1d4ed8; }
-    .welcome-formats { font-size: 12px; color: var(--text-subtle); }
+/* MISSING STRIP */
+.mstrip{background:var(--surface);border:1px solid #f0cccc;border-radius:7px;padding:8px 12px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mown{font-size:11px;font-weight:500;color:var(--red);flex-shrink:0}
+.mgoal{font-size:10px;color:#c06060;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'DM Mono',monospace}
 
-    /* ── Stats row ── */
-    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
-    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; }
-    .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; font-weight: 500; }
-    .stat-value { font-size: 30px; font-weight: 700; color: var(--text); }
-    .stat-card.s-on-track .stat-value { color: var(--green); }
-    .stat-card.s-at-risk .stat-value { color: var(--red); }
-    .stat-card.s-sem-update .stat-value { color: #d97706; }
+/* OWNER GROUP */
+.og{margin-bottom:20px}
+.ohdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid var(--border-soft)}
+.oav{width:27px;height:27px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--text2);flex-shrink:0;border:1px solid var(--border)}
+.oname{font-size:12px;font-weight:600;color:var(--text)}
+.oteam{font-size:10px;color:var(--text3);margin-left:3px}
+.ostats{margin-left:auto;display:flex;gap:5px}
 
-    /* ── Team breakdown ── */
-    .team-breakdown { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
-    .tb-header { display: grid; grid-template-columns: 1fr 60px 90px 75px 70px 60px 95px; padding: 8px 16px; background: var(--bg); border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 600; color: var(--text-subtle); text-transform: uppercase; letter-spacing: .05em; gap: 8px; }
-    .tb-row { display: grid; grid-template-columns: 1fr 60px 90px 75px 70px 60px 95px; padding: 10px 16px; border-bottom: 1px solid var(--border); align-items: center; gap: 8px; font-size: 13px; }
-    .tb-row:last-child { border-bottom: none; }
-    .tb-row:hover { background: var(--bg); }
-    .tb-team { font-weight: 600; }
-    .tb-total { color: var(--text-muted); font-size: 13px; font-weight: 600; }
-    .tb-pill { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 10px; white-space: nowrap; display: inline-block; }
-    .tp-on-track { background: var(--green-bg); color: var(--green); }
-    .tp-at-risk { background: var(--yellow-bg); color: var(--yellow); }
-    .tp-blocked { background: var(--red-bg); color: var(--red); }
-    .tp-done { background: var(--teal-bg); color: var(--teal); }
-    .tp-sem-update { background: #fef9c3; color: #92400e; }
-    .tp-zero { color: var(--text-subtle); font-size: 12px; padding-left: 9px; }
+/* GOAL CARD */
+.gc{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:6px}
+.gc.risk{border-left:3px solid #ef9f27}.gc.blocked{border-left:3px solid var(--red)}.gc.abandoned{border-left:3px solid var(--border)}
+.gc.missing{border-left:3px solid var(--red);background:#fffafa}
+.gc.notstarted{border-left:3px solid var(--purple-bd);background:#fdfcff}
+.gc.neverupd{border-left:3px solid var(--border-soft);background:var(--bg)}
+.gtop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:5px}
+.gname{font-size:12px;font-weight:500;line-height:1.4;flex:1;color:var(--text)}
+.gpri{font-size:10px;color:var(--text3);font-weight:400}
+.gacts{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
 
-    /* ── Section headers ── */
-    .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; margin-top: 28px; }
-    .section-header:first-child { margin-top: 0; }
-    .section-title { font-size: 15px; font-weight: 700; }
-    .section-count { font-size: 13px; color: var(--text-muted); }
-    hr.divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+/* LAST UPDATE */
+.lu{background:var(--bg);border-radius:6px;padding:7px 10px;margin-top:6px}
+.lu-meta{font-size:10px;color:var(--text3);margin-bottom:3px;display:flex;align-items:center;gap:5px}
+.lu-wk{font-weight:600;color:var(--text2);font-family:'DM Mono',monospace}
+.lu-txt{font-size:11px;color:var(--text2);line-height:1.55}
+.no-upd{border-radius:6px;padding:7px 10px;margin-top:6px;font-size:11px;font-style:italic}
+.no-upd.m{background:#fff8f8;border:1px solid #f0cccc;color:var(--red)}
+.no-upd.ns{background:var(--purple-bg);border:1px solid var(--purple-bd);color:var(--purple)}
+.no-upd.nu{background:var(--bg);border:1px solid var(--border);color:var(--text3)}
 
-    /* ── Count breakdown ── */
-    .count-breakdown { font-size: 13.5px; color: var(--text-muted); margin-bottom: 22px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+/* WEEK DOTS */
+.wdots{display:flex;gap:3px;margin-top:8px;align-items:center}
+.wd{width:17px;height:4px;border-radius:2px}
+.wg{background:#b8d98a}.wy{background:#f5c55a}.wr{background:#eda0a0}
+.wdo{background:#85d4b8}.wab{background:#ccc9c0}.we{background:var(--border)}
+.wlb{font-size:9px;color:var(--text3);margin-left:4px;font-family:'DM Mono',monospace}
 
-    /* ── Team → Owner grouping ── */
-    .team-section { margin-bottom: 32px; }
-    .team-section-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px 8px 0 0; border-bottom: none; }
-    .team-section-name { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); }
-    .team-section-count { font-size: 12px; color: var(--text-subtle); }
-    .team-section-body { border: 1px solid var(--border); border-radius: 0 0 8px 8px; padding: 16px; background: var(--surface); }
-    .owner-group { margin-bottom: 20px; }
-    .owner-group:last-child { margin-bottom: 0; }
-    .owner-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .owner-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
-    .owner-name { font-size: 14px; font-weight: 700; }
-    .owner-mini-badges { display: flex; gap: 5px; margin-left: auto; }
-    .mini-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
-    .mini-badge.mu { background: #fef9c3; color: #92400e; }
-    .mini-badge.ar { background: var(--red-bg); color: var(--red); }
+/* BADGES */
+.bdg{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:500;white-space:nowrap;font-family:'DM Mono',monospace}
+.bg{background:var(--green-bg);color:var(--green)}.by{background:var(--yellow-bg);color:var(--yellow)}
+.br{background:var(--red-bg);color:var(--red)}.bd{background:var(--done-bg);color:var(--done)}
+.ba{background:var(--gray-bg);color:var(--gray)}.bn{background:var(--bg);color:var(--text3)}
 
-    /* ── Cards grid ── */
-    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 10px; }
+/* CARD BUTTONS */
+.cbtn{font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface);cursor:pointer;color:var(--text2);white-space:nowrap;transition:all .1s;font-family:'DM Sans',sans-serif}
+.cbtn:hover{background:var(--bg);color:var(--text)}
+.cbtn:disabled{opacity:.4;cursor:default}
+.cbtn.deep{border-color:var(--purple-bd);color:var(--purple)}
+.cbtn.deep:hover{background:var(--purple-bg)}
 
-    /* ── Goal card ── */
-    .goal-card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: 8px; padding: 13px 14px; display: flex; flex-direction: column; gap: 9px; }
-    .goal-card.c-missing      { border-left-color: var(--red); }
-    .goal-card.c-not-started  { border-left-color: #9333ea; }
-    .goal-card.c-never-updated{ border-left-color: #9ca3af; }
-    .goal-card.c-on-track     { border-left-color: var(--green); }
-    .goal-card.c-at-risk      { border-left-color: #eab308; }
-    .goal-card.c-blocked      { border-left-color: var(--red); }
-    .goal-card.c-done         { border-left-color: var(--teal); }
-    .goal-card.c-abandoned    { border-left-color: #9ca3af; }
-    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-    .card-goal-name { font-size: 13.5px; font-weight: 600; line-height: 1.45; flex: 1; }
-    .card-priority { font-size: 11px; color: var(--text-subtle); white-space: nowrap; padding-top: 2px; }
-    .card-status-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .status-badge { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 10px; white-space: nowrap; }
-    .sb-on-track  { background: var(--green-bg); color: var(--green); }
-    .sb-at-risk   { background: var(--yellow-bg); color: var(--yellow); }
-    .sb-blocked   { background: var(--red-bg); color: var(--red); }
-    .sb-done      { background: var(--teal-bg); color: var(--teal); }
-    .sb-abandoned { background: var(--gray-bg); color: var(--gray); }
-    .sb-not-started{ background: var(--gray-bg); color: var(--gray); }
-    .sb-none      { background: var(--gray-bg); color: var(--text-subtle); }
-    .card-warning { font-size: 11px; color: var(--red); font-weight: 600; }
-    .update-box { background: var(--bg); border-radius: 6px; padding: 9px 11px; font-size: 12px; }
-    .update-meta { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
-    .update-week-label { font-weight: 600; color: var(--text-muted); font-size: 11px; }
-    .update-text { color: var(--text-muted); line-height: 1.55; }
-    .state-msg { border-radius: 6px; padding: 8px 11px; font-size: 12px; font-weight: 500; }
-    .state-msg.missing      { background: var(--red-bg); color: #991b1b; }
-    .state-msg.not-started  { background: var(--purple-bg); color: var(--purple); }
-    .state-msg.never-updated{ background: var(--gray-bg); color: var(--gray); }
-    .week-dots { display: flex; gap: 8px; align-items: flex-end; }
-    .week-dot-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .week-dot-lbl { font-size: 9px; color: var(--text-subtle); }
-    .week-dot { width: 11px; height: 11px; border-radius: 50%; background: #e2e8f0; }
-    .wd-green { background: var(--green); } .wd-yellow { background: #eab308; }
-    .wd-red { background: var(--red); } .wd-teal { background: var(--teal); } .wd-gray { background: #9ca3af; }
-    .week-dot.wdc { outline: 2px solid #2563eb; outline-offset: 2px; }
+/* EXPAND BOXES */
+.exbox{border-radius:7px;padding:10px 12px;margin-top:8px;font-size:11px;line-height:1.65}
+.exbox.plain{background:var(--bg);color:var(--text2)}
+.exbox.deep{background:var(--purple-bg);border:1px solid var(--purple-bd);color:#2a256a}
+.exlbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;color:var(--text3)}
+.exbox.deep .exlbl{color:var(--purple)}
+.exbox h3{font-size:11px;font-weight:600;margin:8px 0 3px}
+.exbox h3:first-child{margin-top:0}
+.exbox p{margin-bottom:3px}
+.exbox li{margin:2px 0 2px 12px}
 
-    /* ── AI card buttons ── */
-    .card-ai-buttons { display: flex; gap: 6px; padding-top: 2px; }
-    .btn-ai { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; transition: all .12s; white-space: nowrap; }
-    .btn-ai:hover { border-color: #93c5fd; color: #2563eb; background: #eff6ff; }
-    .btn-deepdive { border-color: #d8b4fe; color: var(--purple); }
-    .btn-deepdive:hover { background: #faf5ff; border-color: #9333ea; color: #7e22ce; }
+/* TOOL SECTIONS */
+.toolbox{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
+.tool-intro{font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.65}
+.tool-result{margin-top:16px;border-top:1px solid var(--border-soft);padding-top:14px}
+.tool-result h3{font-size:12px;font-weight:600;margin:12px 0 4px}
+.tool-result h3:first-child{margin-top:0}
+.tool-result p{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:3px}
+.tool-result li{font-size:12px;color:var(--text2);line-height:1.6;margin:2px 0 2px 14px}
+.iload{font-size:11px;color:var(--text3);font-style:italic;padding:8px 0}
 
-    /* ── AI result panels (in card) ── */
-    .card-ai-panel { border-radius: 6px; padding: 10px 12px; font-size: 12px; line-height: 1.6; margin-top: 2px; }
-    .card-ai-panel-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
-    .panel-translate { background: #f8fafc; border: 1px solid var(--border); }
-    .panel-translate .card-ai-panel-label { color: var(--text-subtle); }
-    .panel-translate .panel-body { color: var(--text-muted); }
-    .panel-deepdive { background: #faf5ff; border: 1px solid #e9d5ff; }
-    .panel-deepdive .card-ai-panel-label { color: #9333ea; }
-    .panel-deepdive .panel-body { color: #4c1d95; }
-    .ai-loading-inline { color: var(--text-subtle); font-style: italic; }
-    .ai-error-inline { color: var(--red); }
+/* MARCELA BOX */
+.mbox{background:linear-gradient(135deg,var(--purple-bg) 0%,var(--bg) 100%);border:1px solid var(--purple-bd);border-radius:9px;padding:14px 16px;margin-bottom:16px}
+.mtitle{font-size:13px;font-weight:600;color:#2e2880;margin-bottom:3px}
+.msub{font-size:11px;color:var(--purple);line-height:1.55}
+.mtags{margin-top:8px;display:flex;flex-wrap:wrap;gap:4px}
+.mtag{font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(80,70,168,.12);color:var(--purple);font-weight:600;letter-spacing:.03em}
 
-    /* ── AI tabs ── */
-    .ai-tab-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
-    .ai-tab-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-    .ai-tab-context { font-size: 13px; color: var(--text-muted); }
-    .ai-tab-desc { font-size: 13px; color: var(--text-muted); max-width: 520px; line-height: 1.6; margin-bottom: 20px; }
-    .run-btn { padding: 10px 22px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s; white-space: nowrap; }
-    .run-btn:hover:not(:disabled) { background: #1d4ed8; }
-    .run-btn:disabled { opacity: .6; cursor: not-allowed; }
-    .run-btn-marcela { background: #9333ea; }
-    .run-btn-marcela:hover:not(:disabled) { background: #7e22ce; }
-    .ai-loading-full { padding: 32px; text-align: center; color: var(--text-muted); font-size: 14px; }
-    .ai-error-full { padding: 16px; background: var(--red-bg); color: var(--red); border-radius: 8px; font-size: 13px; }
-
-    /* Markdown output */
-    .analysis-result { font-size: 14px; line-height: 1.7; color: var(--text); }
-    .analysis-result h2 { font-size: 16px; font-weight: 700; margin: 24px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-    .analysis-result h2:first-child { margin-top: 0; }
-    .analysis-result h3 { font-size: 14px; font-weight: 700; margin: 16px 0 8px; }
-    .analysis-result p { margin-bottom: 10px; color: var(--text-muted); }
-    .analysis-result ul, .analysis-result ol { padding-left: 20px; margin-bottom: 10px; color: var(--text-muted); }
-    .analysis-result li { margin-bottom: 4px; }
-    .analysis-result strong { color: var(--text); font-weight: 600; }
-    .marcela-result { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 10px; padding: 24px; }
-    .marcela-result p { color: #4c1d95; }
-    .marcela-result ul, .marcela-result ol { color: #4c1d95; }
-    .marcela-result h2 { color: var(--purple); border-bottom-color: #e9d5ff; }
-
-    /* ── API Key Modal ── */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-    .modal { background: var(--surface); border-radius: 12px; padding: 28px; width: 400px; max-width: 92vw; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
-    .modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
-    .modal-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
-    .modal-warn { font-size: 11px; color: #92400e; background: #fef9c3; border-radius: 6px; padding: 8px 10px; margin-bottom: 16px; line-height: 1.5; }
-    .modal input { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 9px 12px; font-size: 13px; font-family: monospace; outline: none; margin-bottom: 14px; }
-    .modal input:focus { border-color: #93c5fd; }
-    .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; }
-    .modal-btn { padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); transition: all .12s; }
-    .modal-btn.primary { background: #2563eb; color: white; border-color: #2563eb; }
-    .modal-btn.primary:hover { background: #1d4ed8; }
-    .modal-btn.danger { color: var(--red); }
-    .modal-btn.danger:hover { background: var(--red-bg); border-color: var(--red); }
-
-    /* ── Misc ── */
-    #fileInput { display: none; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); font-size: 14px; }
-  </style>
+/* TEAM SECTION */
+.tsec{margin-bottom:22px}
+.tlbl{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border-soft)}
+</style>
 </head>
 <body>
 
-<input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
-
-<!-- ── API Key Modal ── -->
-<div id="apiKeyModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeApiModal()">
-  <div class="modal">
-    <h3>🔑 Chave API Anthropic</h3>
-    <p class="modal-hint">Necessária para os recursos de IA (Linguagem simples, Deep Dive, Análise, Marcela Mode).</p>
-    <p class="modal-warn">⚠️ A chave é armazenada localmente neste navegador. Não compartilhe este arquivo com a chave configurada. Use apenas em dispositivos de confiança.</p>
-    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off">
-    <div class="modal-buttons">
-      <button class="modal-btn danger" onclick="clearApiKey()">Remover chave</button>
-      <button class="modal-btn" onclick="closeApiModal()">Cancelar</button>
-      <button class="modal-btn primary" onclick="saveApiKey()">Salvar</button>
+<div class="hdr">
+  <div>
+    <h1>Goals Dashboard · D&amp;A 2026</h1>
+    <div class="hdr-sub" id="cyc">Carregue a planilha para começar</div>
+  </div>
+  <div class="hdr-r">
+    <div class="wlbl">
+      Semana
+      <select id="wsel" onchange="setW(this.value)">
+        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+        <option value="4">4</option><option value="5" selected>5</option><option value="6">6</option>
+      </select>
     </div>
+    <span class="smsg" id="smsg"></span>
+    <button class="hbtn primary" onclick="syncSheets()">↻ Sincronizar Sheets</button>
+    <button class="hbtn" onclick="loadFile()">↑ Carregar CSV</button>
   </div>
 </div>
 
-<!-- ── Header ── -->
-<header class="header">
-  <span class="header-title">Goals Dashboard · D&amp;A 2026</span>
-  <div class="header-divider"></div>
-  <span class="header-cycle" id="cycleLabel">Semana — de 6</span>
-  <div class="header-spacer"></div>
-  <div class="h-selector" id="cycleSelectorWrap" style="display:none">
-    <span>Ciclo:</span>
-    <select id="cycleSelector"></select>
-  </div>
-  <div class="h-selector">
-    <span>Semana:</span>
-    <select id="weekSelector">
-      <option value="1">S1</option><option value="2">S2</option><option value="3">S3</option>
-      <option value="4">S4</option><option value="5">S5</option><option value="6">S6</option>
-    </select>
-  </div>
-  <button class="api-key-btn" id="apiKeyBtn" onclick="openApiModal()">🔑 API Key</button>
-  <button class="upload-btn" onclick="document.getElementById('fileInput').click()">↑ Upload CSV / XLSX</button>
-  <span class="last-updated" id="lastUpdated"></span>
-</header>
-
-<!-- ── Layout ── -->
-<div class="layout">
-
+<div class="body">
   <nav class="sidebar">
-    <div class="sidebar-section-label">Dashboard</div>
-    <div class="sidebar-tab active" data-tab="overview" onclick="switchTab('overview')">
-      <span>Overview</span><span class="tab-badge" id="badge-overview">—</span>
-    </div>
-    <div class="sidebar-tab" data-tab="on-track" onclick="switchTab('on-track')">
-      <span>On Track</span><span class="tab-badge" id="badge-on-track">—</span>
-    </div>
-    <div class="sidebar-tab" data-tab="sem-update" onclick="switchTab('sem-update')">
-      <span>Sem update</span><span class="tab-badge" id="badge-sem-update">—</span>
-    </div>
-    <div class="sidebar-tab" data-tab="at-risk" onclick="switchTab('at-risk')">
-      <span>At Risk</span><span class="tab-badge" id="badge-at-risk">—</span>
-    </div>
-    <div class="sidebar-section-label">IA</div>
-    <div class="sidebar-tab" data-tab="ai-analysis" onclick="switchTab('ai-analysis')">
-      <span>Análise IA</span><span class="tab-badge" id="badge-ai-analysis">✦</span>
-    </div>
-    <div class="sidebar-tab marcela-tab" data-tab="marcela" onclick="switchTab('marcela')">
-      <span>Marcela Mode</span><span class="tab-badge" id="badge-marcela">✦</span>
-    </div>
+    <div class="sg">Views</div>
+    <button class="ni on" onclick="show('ov')">Overview <span class="nb r" id="b-ov"></span></button>
+    <button class="ni" onclick="show('ms')">Sem update <span class="nb r" id="b-ms"></span></button>
+    <button class="ni" onclick="show('rk')">At Risk <span class="nb y" id="b-rk"></span></button>
+    <button class="ni" onclick="show('al')">Todos <span class="nb" id="b-al"></span></button>
+    <div class="sg" style="margin-top:8px">AI Tools</div>
+    <button class="ni" onclick="show('an')">AI Analysis ✦</button>
+    <button class="ni marcela" onclick="show('mc')">Marcela Mode ✦</button>
   </nav>
 
-  <main class="main">
-    <div class="welcome" id="welcomeScreen">
-      <div class="welcome-icon">📊</div>
-      <h2>Goals Dashboard</h2>
-      <p>Faça upload do CSV exportado do Google Sheets para visualizar o progresso dos goals do ciclo.</p>
-      <button class="welcome-upload-btn" onclick="document.getElementById('fileInput').click()">Fazer upload do arquivo</button>
-      <p class="welcome-formats">Aceita .csv e .xlsx &nbsp;·&nbsp; Google Sheets: Arquivo → Fazer download → CSV</p>
+  <div class="main">
+    <div id="t-ov">
+      <div class="welcome">
+        <div style="font-size:28px">📊</div>
+        <h2>Goals Dashboard · D&amp;A</h2>
+        <p>Clique em <strong>Sincronizar Sheets</strong> para carregar os dados direto da planilha, ou exporte como CSV no Google Sheets e clique em <strong>Carregar CSV</strong>.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+          <button class="pbtn" onclick="syncSheets()">↻ Sincronizar Sheets</button>
+          <button class="hbtn" onclick="loadFile()">↑ Carregar CSV</button>
+        </div>
+      </div>
     </div>
-    <div class="tab-content" id="tab-overview"></div>
-    <div class="tab-content" id="tab-on-track"></div>
-    <div class="tab-content" id="tab-sem-update"></div>
-    <div class="tab-content" id="tab-at-risk"></div>
-    <div class="tab-content" id="tab-ai-analysis"></div>
-    <div class="tab-content" id="tab-marcela"></div>
-  </main>
+    <div id="t-ms" style="display:none"></div>
+    <div id="t-rk" style="display:none"></div>
+    <div id="t-al" style="display:none"></div>
+    <div id="t-an" style="display:none"></div>
+    <div id="t-mc" style="display:none"></div>
+  </div>
 </div>
 
 <script>
-// ─── Marked config ────────────────────────────────────────────────────────────
-marked.setOptions({ breaks: true, gfm: true });
+var APPS_URL = 'https://script.google.com/a/macros/vtex.com/s/AKfycbxAdllQg8yrQKQns9W4eG654yY9pi4hDzF2xaPvPzwGTTrvM7u7H6N-WT21mSLMnD-0/exec?token=vtex-goals-2026';
+var D=[],CW=5;
+var FILL=['','-','arthur to update','leandro to update','oncall','on call','to be defined','to update'];
+var CACHE={};
 
-// ─── State ────────────────────────────────────────────────────────────────────
-let goals = [];
-let currentWeek = 1;
-let selectedCycle = 'all';
-let activeTab = 'overview';
-const aiCache = new Map();
-let renderGoalList = [];
-let renderIdx = 0;
-
-const MODEL = 'claude-sonnet-4-5';
-
-function visibleGoals() {
-  return selectedCycle === 'all' ? goals : goals.filter(g => g.cycle === selectedCycle);
-}
-
-// ─── Placeholders ─────────────────────────────────────────────────────────────
-const PLACEHOLDERS = new Set([
-  '-', '--', '---', 'n/a', 'na', 'tbd', 'oncall', 'on call', 'on-call',
-  'to be defined', 'arthur to update', 'leandro to update', 'a definir',
-  'sem update', 'sem atualização', 'sem atualizacao'
-]);
-
-function isMeaningful(text) {
-  if (!text) return false;
-  const t = String(text).trim();
-  return t !== '' && !PLACEHOLDERS.has(t.toLowerCase());
-}
-
-// ─── Column detection ─────────────────────────────────────────────────────────
-function detectColumns(headers) {
-  const cols = {};
-  headers.forEach((h, i) => {
-    if (h == null) return;
-    const n = String(h).replace(/^﻿/, '').trim().toLowerCase();
-    for (let w = 1; w <= 6; w++) {
-      if (new RegExp(`(week\\s*${w}|\\bw${w}\\b|\\bs${w}\\b|semana\\s*${w})\\s*(status|estado)`, 'i').test(n)) { if (cols[`w${w}Status`] == null) cols[`w${w}Status`] = i; return; }
-      if (new RegExp(`(week\\s*${w}|\\bw${w}\\b|\\bs${w}\\b|semana\\s*${w})\\s*(update|atualiz)`, 'i').test(n)) { if (cols[`w${w}Update`] == null) cols[`w${w}Update`] = i; return; }
-    }
-    if (n.includes('owner') || n.includes('responsável') || n.includes('responsavel')) { if (cols.owner == null) cols.owner = i; return; }
-    if (n === 'team' || n === 'squad' || n === 'área' || n === 'area' || n === 'time') { if (cols.team == null) cols.team = i; return; }
-    if (n.includes('cycle') || n.includes('ciclo')) { if (cols.cycle == null) cols.cycle = i; return; }
-    if (n.includes('output') || n.includes('resultado esperado') || n.includes('entregável')) { if (cols.output == null) cols.output = i; return; }
-    if (n.includes('priority') || n.includes('prioridade')) { if (cols.priority == null) cols.priority = i; return; }
-    if ((n.includes('automatic') || n.includes('automátic') || n.includes('automatico')) && n.includes('status')) { if (cols.currentStatus == null) cols.currentStatus = i; return; }
-    if (n === 'current status' || n === 'status atual') { if (cols.currentStatus == null) cols.currentStatus = i; return; }
-    if (n === 'six weeks goal' || n === 'goal' || n === 'objetivo' || n === 'meta') { if (cols.goal == null) cols.goal = i; return; }
-    if (n.includes('six weeks goal') && !n.includes('owner') && !n.includes('output') && !n.includes('priority') && !n.includes('status') && !n.includes('cycle')) { if (cols.goal == null) cols.goal = i; }
-  });
-  return cols;
-}
-
-// ─── CSV parser ───────────────────────────────────────────────────────────────
-function parseCSV(text) {
-  const rows = [];
-  const lines = text.replace(/^﻿/, '').split(/\r?\n/);
-  for (const line of lines) {
-    if (line.trim() === '') continue;
-    const row = []; let inQ = false, cell = '';
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { if (inQ && line[i+1] === '"') { cell += '"'; i++; } else inQ = !inQ; }
-      else if (ch === ',' && !inQ) { row.push(cell); cell = ''; }
-      else cell += ch;
-    }
-    row.push(cell); rows.push(row);
+// ── LOADERS ────────────────────────────────────────────────────────────
+async function syncSheets(){
+  var btn=event.target; btn.disabled=true; btn.textContent='↻ Carregando...';
+  setSm('',''); prep();
+  try{
+    var r=await fetch(APPS_URL,{redirect:'follow'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    var csv=await r.text();
+    if(csv.trim().startsWith('Unauthorized')) throw new Error('Acesso negado — verifique o token');
+    finish(csv,'Google Sheets');
+  }catch(e){
+    setSm('Erro: '+e.message,'err');
+    document.getElementById('t-ov').innerHTML='<div class="welcome"><div style="color:var(--red);font-size:12px;max-width:320px;text-align:center">Não foi possível conectar ao Sheets.<br><small>'+e.message+'</small><br><br>Tente <strong>Carregar CSV</strong> como alternativa.</div></div>';
   }
-  return rows;
+  btn.disabled=false; btn.textContent='↻ Sincronizar Sheets';
 }
 
-function readFile(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    if (file.name.toLowerCase().endsWith('.csv')) {
-      r.onload = e => { try { res(parseCSV(e.target.result)); } catch(err) { rej(err); } };
-      r.readAsText(file, 'UTF-8');
-    } else {
-      r.onload = e => {
-        try { const wb = XLSX.read(e.target.result, {type:'array'}); res(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1,defval:''})); }
-        catch(err) { rej(err); }
+function loadFile(){
+  var inp=document.createElement('input');inp.type='file';inp.accept='.csv,.xlsx';
+  inp.onchange=function(e){
+    var f=e.target.files[0];if(!f)return;
+    setSm('',''); prep();
+    if(f.name.endsWith('.xlsx')){
+      var fr=new FileReader();
+      fr.onload=function(ev){
+        getXL(function(XL){
+          try{
+            var wb=XL.read(ev.target.result,{type:'array'});
+            var sn=wb.SheetNames[0];
+            for(var i=0;i<wb.SheetNames.length;i++){if(wb.SheetNames[i].replace(/\s/g,'').toUpperCase().indexOf('Q2C1')>=0){sn=wb.SheetNames[i];break;}}
+            finish(XL.utils.sheet_to_csv(wb.Sheets[sn]),f.name);
+          }catch(er){showErr(er.message);}
+        });
       };
-      r.readAsArrayBuffer(file);
+      fr.readAsArrayBuffer(f);
+    }else{
+      var fr2=new FileReader();
+      fr2.onload=function(ev){try{finish(ev.target.result,f.name);}catch(er){showErr(er.message);}};
+      fr2.readAsText(f);
     }
-    r.onerror = rej;
-  });
+  };
+  inp.click();
 }
 
-// ─── Goal parsing ─────────────────────────────────────────────────────────────
-function parseGoals(rows) {
-  if (rows.length < 2) return [];
-  const cols = detectColumns(rows[0]);
-  return rows.slice(1).reduce((acc, row) => {
-    const owner = String(row[cols.owner] || '').trim();
-    const goal  = String(row[cols.goal]  || '').trim();
-    if (!owner && !goal) return acc;
-    const weeks = [];
-    for (let w = 1; w <= 6; w++) weeks.push({ status: String(row[cols[`w${w}Status`]] || '').trim(), update: String(row[cols[`w${w}Update`]] || '').trim() });
-    acc.push({ owner, team: String(row[cols.team]||'').trim(), cycle: String(row[cols.cycle]||'').trim(), goal, output: String(row[cols.output]||'').trim(), priority: String(row[cols.priority]||'').trim(), currentStatus: String(row[cols.currentStatus]||'').trim(), weeks });
-    return acc;
-  }, []);
+function getXL(cb){
+  if(window.XLSX){cb(window.XLSX);return;}
+  var s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload=function(){cb(window.XLSX);};
+  document.head.appendChild(s);
 }
 
-function detectCurrentWeek(list) {
-  for (let w = 6; w >= 1; w--) if (list.some(g => isMeaningful(g.weeks[w-1].update) || isMeaningful(g.weeks[w-1].status))) return w;
-  return 1;
+function prep(){
+  resetTabs();
+  var ov=document.getElementById('t-ov');
+  ov.style.display='block';
+  ov.innerHTML='<div class="welcome"><div class="spinner"></div><div style="font-size:12px;color:var(--text3)">Carregando...</div></div>';
+  ov.dataset.r='1';
 }
 
-function populateCycleSelector() {
-  const cycles = [...new Set(goals.map(g => g.cycle).filter(Boolean))].sort();
-  const sel = document.getElementById('cycleSelector');
-  sel.innerHTML = `<option value="all">Todos os ciclos</option>` + cycles.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
-  sel.value = selectedCycle;
-  document.getElementById('cycleSelectorWrap').style.display = cycles.length > 0 ? 'flex' : 'none';
+function finish(csv,src){
+  parseCSV(csv);
+  var t=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  setSm('Atualizado às '+t,'ok');
+  document.getElementById('cyc').textContent='Q2-C1 · Semana '+CW+' de 6';
+  updBadges(); resetTabs(); show('ov');
 }
 
-// ─── Status ───────────────────────────────────────────────────────────────────
-function normalizeStatus(raw) {
-  if (!raw) return 'none';
-  const s = String(raw).trim().toLowerCase();
-  if (!s) return 'none';
-  if (s==='green'||s.includes('on track')||s.includes('verde')||s==='🟢'||s==='no prazo') return 'on-track';
-  if (s==='yellow'||s.includes('at risk')||s.includes('amarelo')||s==='🟡'||s.includes('risco')) return 'at-risk';
-  if (s==='red'||s.includes('blocked')||s.includes('vermelho')||s==='🔴'||s.includes('bloqueado')) return 'blocked';
-  if (s==='done'||s.includes('conclu')||s.includes('feito')||s==='✅'||s==='completo') return 'done';
-  if (s.includes('abandon')) return 'abandoned';
-  if (s.includes('not started')||s.includes('não iniciado')||s.includes('nao iniciado')) return 'not-started';
-  return 'none';
+function showErr(m){
+  setSm('Erro','err');
+  document.getElementById('t-ov').innerHTML='<div class="welcome"><div style="color:var(--red);font-size:12px">Erro: '+m+'</div></div>';
 }
 
-const STATUS_LABEL = { 'on-track':'On track','at-risk':'At risk','blocked':'Blocked','done':'Done','abandoned':'Abandoned','not-started':'Not started','none':'Sem update' };
+function setSm(t,c){var el=document.getElementById('smsg');el.textContent=t;el.className='smsg'+(c?' '+c:'');}
 
-function statusBadgeHTML(norm) { return `<span class="status-badge sb-${norm}">${STATUS_LABEL[norm]||'Sem update'}</span>`; }
-
-function effStatus(goal, week) { return normalizeStatus(goal.currentStatus || goal.weeks[week-1].status); }
-
-// ─── Classification ───────────────────────────────────────────────────────────
-function classifyGoal(goal, week) {
-  const wi = week - 1;
-  const hasPrev  = goal.weeks.slice(0, wi).some(w => isMeaningful(w.update));
-  const hasAny   = goal.weeks.some(w => isMeaningful(w.update));
-  const hasSt    = isMeaningful(goal.currentStatus) || goal.weeks.some(w => isMeaningful(w.status));
-  const curOk    = isMeaningful(goal.weeks[wi].update);
-  const st       = effStatus(goal, week);
-  if (st === 'not-started' && !hasAny) return 'not-started';
-  if (!hasAny && !hasSt) return 'never-updated';
-  if (!curOk && (hasPrev || (hasSt && st !== 'not-started'))) return 'missing';
-  return 'ok';
+// ── CSV PARSER ─────────────────────────────────────────────────────────
+function pRow(l){
+  var c=[],cur='',q=false;
+  for(var i=0;i<l.length;i++){var ch=l[i];if(ch==='"'){q=!q;continue;}if(ch===','&&!q){c.push(cur.trim());cur='';continue;}cur+=ch;}
+  c.push(cur.trim());return c;
 }
 
-function isAtRisk(g, week) { const s = effStatus(g,week); return s==='at-risk'||s==='blocked'||s==='abandoned'; }
-function isOnTrack(g, week) { const s = effStatus(g,week); return s==='on-track'||s==='done'; }
-
-function getLastUpdate(goal, upToWeek) {
-  for (let w = upToWeek; w >= 1; w--) {
-    const wd = goal.weeks[w-1];
-    if (isMeaningful(wd.update)) return { week: w, status: normalizeStatus(wd.status), text: wd.update };
+function parseCSV(csv){
+  var lines=csv.split('\n').filter(function(l){return l.trim();});
+  var hdr=pRow(lines[0]).map(function(h){return h.toLowerCase().trim();});
+  function ci(n){return hdr.findIndex(function(h){return h.includes(n);});}
+  function ciExact(n){return hdr.findIndex(function(h){return h===n;});}
+  var iO=ci('owner'),iT=ci('team');
+  var iG=ciExact('six weeks goal')>=0?ciExact('six weeks goal'):hdr.findIndex(function(h){return h.includes('goal')&&!h.includes('quarter')&&!h.includes('output')&&!h.includes('priority')&&!h.includes('type')&&!h.includes('product')&&!h.includes('investment');});
+  var iOut=ci('output'),iP=ci('priority'),iC=ci('current');
+  var wc=[1,2,3,4,5,6].map(function(w){return{
+    s:hdr.findIndex(function(h){return h==='w'+w+' status'||h==='w'+w+'status'||(h.includes('week '+w)&&h.includes('status'));}),
+    u:hdr.findIndex(function(h){return h==='w'+w+' update'||h==='w'+w+'update'||(h.includes('week '+w)&&h.includes('update'));})
+  };});
+  D=[];
+  for(var r=1;r<lines.length;r++){
+    var row=pRow(lines[r]);if(!row[iG]||!row[iO])continue;
+    var g={owner:row[iO]||'',team:row[iT]||'',goal:row[iG]||'',output:iOut>=0?(row[iOut]||''):'',priority:iP>=0?(row[iP]||''):'',current:iC>=0?(row[iC]||''):''};
+    for(var w=1;w<=6;w++){var c=wc[w-1];g['w'+w]={s:c.s>=0?(row[c.s]||'').trim():'',u:c.u>=0?(row[c.u]||'').trim():''};}
+    D.push(g);
   }
+  CW=parseInt(document.getElementById('wsel').value)||5;
+}
+
+// ── DATA HELPERS ───────────────────────────────────────────────────────
+var SC={
+  'Green':{b:'bg',d:'wg',l:'On track'},
+  'Yellow':{b:'by',d:'wy',l:'At risk'},
+  'Red':{b:'br',d:'wr',l:'Blocked'},
+  'Done':{b:'bd',d:'wdo',l:'Done'},
+  'Abandoned':{b:'ba',d:'wab',l:'Abandoned'},
+  'Not started':{b:'bn',d:'we',l:'Not started'},
+  '':{b:'bn',d:'we',l:'Sem update'}
+};
+
+function gW(g,n){return g['w'+n]||{s:'',u:''};}
+function hasUpd(g){for(var w=1;w<=6;w++){var u=gW(g,w).u;if(u&&FILL.indexOf(u.toLowerCase())<0)return true;}return false;}
+function hasSt(g){for(var w=1;w<=6;w++){if(gW(g,w).s)return true;}return false;}
+
+function gstate(g){
+  var cw=gW(g,CW),ok=cw.u&&FILL.indexOf(cw.u.toLowerCase())<0;
+  if(ok)return 'ok';
+  var active=(g.current&&g.current!==''&&g.current!=='Not started')||hasUpd(g)||hasSt(g);
+  if(active)return 'missing';
+  if(g.current==='Not started')return 'notstarted';
+  return 'neverupd';
+}
+
+function isMiss(g){var s=gstate(g);return s==='missing'||s==='notstarted'||s==='neverupd';}
+function isRisk(g){return['Yellow','Red','Abandoned'].indexOf(g.current)>=0;}
+function getMiss(){return D.filter(isMiss);}
+function getRisk(){return D.filter(isRisk);}
+function getGood(){return D.filter(function(g){return['Green','Done'].indexOf(g.current)>=0;});}
+
+function lastUpd(g){
+  for(var n=CW;n>=1;n--){var w=gW(g,n);if(w.u&&FILL.indexOf(w.u.toLowerCase())<0)return{week:n,text:w.u,status:w.s||g.current};}
   return null;
 }
 
-function dotCls(status) {
-  const n = normalizeStatus(status);
-  if (n==='on-track') return 'wd-green'; if (n==='at-risk') return 'wd-yellow';
-  if (n==='blocked')  return 'wd-red';   if (n==='done')     return 'wd-teal';
-  if (n==='abandoned'||n==='not-started') return 'wd-gray';
-  return '';
+function bdg(s){var c=SC[s]||SC[''];return '<span class="bdg '+c.b+'">'+c.l+'</span>';}
+
+function wdots(g){
+  var h='<div class="wdots">';
+  for(var i=1;i<=6;i++){
+    var s=gW(g,i).s,c=(SC[s]||SC['']).d,ol=i===CW?' style="outline:1.5px solid var(--text3);outline-offset:1px"':'';
+    h+='<div class="wd '+c+'"'+ol+' title="S'+i+': '+(s||'?')+'"></div>';
+  }
+  return h+'<span class="wlb">S1–S6</span></div>';
 }
 
-// ─── Avatar ───────────────────────────────────────────────────────────────────
-const AV_COLORS = ['#2563eb','#7c3aed','#0d9488','#b45309','#dc2626','#0891b2','#db2777','#16a34a'];
-function avatarColor(n) { let h=0; for(const c of n) h=(Math.imul(h,31)+c.charCodeAt(0))|0; return AV_COLORS[Math.abs(h)%AV_COLORS.length]; }
-function initials(n) { const p=n.trim().split(/\s+/); return p.length===1?p[0].slice(0,2).toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase(); }
+function inits(n){var p=n.trim().split(' ');return p.length>=2?(p[0][0]+p[p.length-1][0]).toUpperCase():n.slice(0,2).toUpperCase();}
+function esc(s){return(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' ').slice(0,300);}
 
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// ── GOAL CARD ──────────────────────────────────────────────────────────
+function goalCard(g){
+  var st=gstate(g),lu=lastUpd(g);
+  var cls=st==='missing'?'missing':st==='notstarted'?'notstarted':st==='neverupd'?'neverupd':isRisk(g)?(g.current==='Abandoned'?'abandoned':g.current==='Red'?'blocked':'risk'):'';
+  var key=btoa(encodeURIComponent((g.owner+g.goal).slice(0,50))).replace(/[^a-zA-Z0-9]/g,'').slice(0,24);
+  var allU=[1,2,3,4,5,6].map(function(n){return gW(g,n).u;}).filter(function(u){return u&&FILL.indexOf(u.toLowerCase())<0;}).join(' | ');
+  var luH='';
+  if(lu){
+    var txt=lu.text.length>280?lu.text.slice(0,280)+'...':lu.text;
+    luH='<div class="lu"><div class="lu-meta"><span class="lu-wk">S'+lu.week+'</span>'+bdg(lu.status)+'</div><div class="lu-txt">'+txt+'</div></div>';
+  }else if(st==='notstarted'){
+    luH='<div class="no-upd ns">Marcado como Not started — sem updates ainda</div>';
+  }else if(st==='neverupd'){
+    luH='<div class="no-upd nu">Sem nenhum update ou status registrado</div>';
+  }else{
+    luH='<div class="no-upd m">Sem update na semana '+CW+'</div>';
+  }
+  var warn=(st==='missing'&&lu&&lu.week<CW)?'<span style="font-size:10px;color:var(--red);margin-left:4px">⚠ sem S'+CW+'</span>':'';
 
-function goalKey(g) { return `${g.owner}||${g.goal}||${g.output}`; }
-
-// ─── API Key ──────────────────────────────────────────────────────────────────
-// Falls back to an in-memory variable when localStorage is unavailable (data: URLs, strict sandboxes).
-// On GitHub Pages (HTTPS) localStorage works normally and the key persists across reloads.
-let _apiKeyMem = '';
-
-function getApiKey() {
-  try { return localStorage.getItem('da_dashboard_api_key') || _apiKeyMem; }
-  catch { return _apiKeyMem; }
+  return '<div class="gc '+cls+'" id="c-'+key+'">'+
+    '<div class="gtop">'+
+      '<div class="gname">'+g.goal+(g.priority?' <span class="gpri">· '+g.priority+'</span>':'')+'</div>'+
+      '<div class="gacts">'+
+        '<div style="display:flex;align-items:center;gap:4px">'+bdg(g.current)+warn+'</div>'+
+        '<button class="cbtn" onclick="doTrans(\''+key+'\',\''+esc(g.owner)+'\',\''+esc(g.goal)+'\',\''+esc(lu?lu.text:'')+'\',\''+g.current+'\')">Traduzir</button>'+
+        '<button class="cbtn deep" onclick="doDive(\''+key+'\',\''+esc(g.owner)+'\',\''+esc(g.goal)+'\',\''+esc(g.output)+'\',\''+esc(allU)+'\',\''+g.current+'\')">Deep dive ↗</button>'+
+      '</div>'+
+    '</div>'+
+    luH+
+    '<div id="ex-'+key+'"></div>'+
+    wdots(g)+
+  '</div>';
 }
 
-function _saveKeyStorage(val) {
-  _apiKeyMem = val;
-  try { if (val) localStorage.setItem('da_dashboard_api_key', val); else localStorage.removeItem('da_dashboard_api_key'); } catch {}
-}
-
-function openApiModal() {
-  document.getElementById('apiKeyInput').value = getApiKey() ? '••••••••••••••••' : '';
-  document.getElementById('apiKeyModal').style.display = 'flex';
-  if (!getApiKey()) document.getElementById('apiKeyInput').value = '';
-}
-
-function closeApiModal() { document.getElementById('apiKeyModal').style.display = 'none'; }
-
-function saveApiKey() {
-  const val = document.getElementById('apiKeyInput').value.trim();
-  if (val && val !== '••••••••••••••••') _saveKeyStorage(val);
-  updateApiKeyBtn();
-  closeApiModal();
-}
-
-function clearApiKey() {
-  _saveKeyStorage('');
-  document.getElementById('apiKeyInput').value = '';
-  updateApiKeyBtn();
-  closeApiModal();
-}
-
-function updateApiKeyBtn() {
-  const btn = document.getElementById('apiKeyBtn');
-  if (getApiKey()) { btn.classList.add('configured'); btn.textContent = '🔑 API Key ✓'; }
-  else { btn.classList.remove('configured'); btn.textContent = '🔑 API Key'; }
-}
-
-// ─── Claude API ───────────────────────────────────────────────────────────────
-async function callClaude(prompt, maxTokens = 1000) {
-  const apiKey = getApiKey();
-  if (!apiKey) { openApiModal(); throw new Error('Configure sua chave API primeiro.'); }
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
+// ── OWNER GROUPS ───────────────────────────────────────────────────────
+function ownerGroups(goals){
+  var owners=[],seen={};
+  goals.forEach(function(g){if(!seen[g.owner]){owners.push(g.owner);seen[g.owner]=true;}});
+  return owners.map(function(o){
+    var gs=goals.filter(function(g){return g.owner===o;});
+    return{owner:o,team:gs[0].team,goals:gs};
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `HTTP ${res.status}`);
-  }
-  const data = await res.json();
-  return data.content[0].text;
 }
 
-// ─── Goal JSON for AI ─────────────────────────────────────────────────────────
-function goalsToJSON(list, week) {
-  return JSON.stringify(list.map(g => {
-    const lastUpd = getLastUpdate(g, week);
-    return {
-      owner: g.owner, team: g.team,
-      goal: g.goal, output: g.output,
-      status: g.currentStatus || g.weeks[week-1].status || 'sem status',
-      semUpdate: classifyGoal(g, week) !== 'ok',
-      ultimoUpdate: lastUpd ? `S${lastUpd.week}: ${lastUpd.text.slice(0,200)}` : null,
-      todosUpdates: g.weeks.map((w,i) => w.update ? `S${i+1}: ${w.update.slice(0,150)}` : null).filter(Boolean)
-    };
-  }), null, 2);
+function ownerBlock(grp){
+  var ms=grp.goals.filter(isMiss).length,rk=grp.goals.filter(isRisk).length;
+  var stats='';
+  if(ms>0)stats+='<span class="bdg br" style="font-size:10px">'+ms+' sem update</span> ';
+  if(rk>0)stats+='<span class="bdg by" style="font-size:10px">'+rk+' at risk</span>';
+  var h='<div class="og">'+
+    '<div class="ohdr">'+
+      '<div class="oav">'+inits(grp.owner)+'</div>'+
+      '<div><span class="oname">'+grp.owner+'</span><span class="oteam">· '+grp.team+'</span></div>'+
+      '<div class="ostats">'+stats+'</div>'+
+    '</div>';
+  grp.goals.forEach(function(g){h+=goalCard(g);});
+  return h+'</div>';
 }
 
-// ─── Prompts ──────────────────────────────────────────────────────────────────
-function deepDivePrompt(goal, week) {
-  const lastUpd = getLastUpdate(goal, week);
-  const updates = goal.weeks.map((w,i) => w.update ? `Semana ${i+1}: ${w.update}` : null).filter(Boolean).join('\n');
-  return `Analise este goal para uma stakeholder de negócio não-técnica. Responda em português com as seguintes seções:
-
-## Em linguagem simples
-2–3 frases sem jargão técnico: o que este goal está tentando fazer, onde as coisas estão agora, e se há algo que precisa de atenção.
-
-## Componentes técnicos
-Para cada termo técnico mencionado no goal ou nos updates (ex: Iceberg, DAG, EKS, Lakehouse, dbt, Spark, etc.): explique o que é em linguagem acessível e como se encaixa neste contexto.
-
-## Por que importa para o negócio
-O valor concreto que este goal entrega quando concluído.
-
-## O que pode dar errado
-Principais riscos ou dependências que merecem atenção.
-
----
-Goal: ${goal.output || goal.goal}
-Descrição original: ${goal.goal}
-Owner: ${goal.owner} — Time: ${goal.team}
-Status atual: ${goal.currentStatus || goal.weeks[week-1].status || 'sem status'}
-Último update: ${lastUpd ? `Semana ${lastUpd.week}: ${lastUpd.text}` : 'Nenhum update registrado'}
-Todos os updates:
-${updates || 'Nenhum update registrado'}`;
+// ── AI CALLS ───────────────────────────────────────────────────────────
+async function ai(prompt,ck){
+  if(CACHE[ck])return CACHE[ck];
+  var r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+  });
+  var d=await r.json();
+  var t=d.content?.map(function(c){return c.text||'';}).join('')||'Sem resposta';
+  CACHE[ck]=t;return t;
 }
 
-function analysisPrompt(json, week) {
-  return `Você é um assistente de PM analisando goals de um ciclo de 6 semanas.
-
-Semana atual do ciclo: ${week} de 6
-
-Goals (JSON):
-${json}
-
-Responda em português, estruturado em exatamente 4 seções com esses títulos:
-
-## Updates não enviados
-Liste os owners que não enviaram update na Semana ${week}. Para cada um: nome e título do goal.
-
-## Itens em risco
-Para goals com status Yellow, Red ou Abandoned: explique por que cada um é preocupante (1–2 frases por goal). Inclua também goals com atualizações vagas ou estagnadas.
-
-## O que está indo bem
-Destaque 3–5 goals com momentum forte e progresso consistente. Explique brevemente por quê.
-
-## Action items para a PM
-Liste 3–5 ações concretas e específicas para esta semana, com indicação de owner quando relevante.`;
+async function doTrans(key,owner,goal,last,status){
+  var box=document.getElementById('ex-'+key);
+  var btns=document.querySelectorAll('#c-'+key+' .cbtn');
+  if(box.dataset.m==='t'){box.dataset.m='';box.innerHTML='';return;}
+  btns.forEach(function(b){b.disabled=true;});
+  box.innerHTML='<div class="iload">Traduzindo...</div>';
+  try{
+    var t=await ai('Traduza este goal técnico para linguagem simples para um stakeholder não-técnico. Máximo 3-4 frases. Sem jargão.\n\nGoal: '+goal+'\nOwner: '+owner+'\nÚltimo update: '+(last||'Sem updates')+'\nStatus: '+status+'\n\nExplique: (1) o que estão tentando fazer, (2) onde está agora, (3) algo a observar.','t-'+key);
+    box.dataset.m='t';
+    box.innerHTML='<div class="exbox plain"><div class="exlbl">Linguagem simples</div>'+t+'</div>';
+  }catch(e){box.innerHTML='<div class="exbox plain" style="color:var(--red)">Erro: '+e.message+'</div>';}
+  btns.forEach(function(b){b.disabled=false;});
 }
 
-function marcelaPrompt(json, week) {
-  return `Você é Marcela, uma PM sênior com visão estratégica aguçada e governança rigorosa. Seus padrões de comportamento:
-- Sempre questiona qual é o valor de negócio disso
-- Sinaliza imediatamente quando o ownership não está claro
-- Lê vaguidade como risco — se não dá pra explicar simplesmente, provavelmente não está claro
-- Pergunta o que acontece se isso atrasar uma semana, e um mês
-- Questiona dependências de terceiros e pergunta se há plano B
-- Exige definição clara de done — o que exatamente estará funcionando
-- Empurra para versões menores e lançáveis: qual é a fatia mais simples que já entrega valor
-- Propõe realocar energia quando algo está travado ou de baixo impacto
-
-Dados dos goals, Semana ${week} de 6:
-${json}
-
-Responda em português, estruturado em exatamente 4 seções:
-
-## 🔍 Perguntas que a Marcela faria
-
-Agrupe por Time e, dentro de cada time, por Owner. Para cada owner liste as perguntas em bullet points separados.
-Use o nome exato do goal (campo "output" ou "goal") ao referenciar — nunca use "primeiro goal", "segundo goal" ou similar.
-Não use aspas em nenhuma das perguntas.
-Formato esperado:
-
-**Nome do Time**
-*Nome do Owner*
-- Pergunta direta sobre o goal X
-- Pergunta direta sobre o goal Y
-
-## ⚠️ Sinais de risco
-4–6 sinais de risco específicos que ela identificaria neste ciclo. Para cada um: mencione o goal pelo nome e explique o risco em 1–2 frases.
-
-## ✂️ Qual é a versão mais simples?
-3–4 goals onde ela questionaria o escopo. Para cada um: mencione o goal pelo nome, o que ela cortaria e por quê.
-
-## 👤 Quem precisa de uma conversa
-2–3 pessoas com quem ela entraria em contato proativamente esta semana, e sobre o quê especificamente (mencione o goal pelo nome).`;
+async function doDive(key,owner,goal,output,allU,status){
+  var box=document.getElementById('ex-'+key);
+  var btns=document.querySelectorAll('#c-'+key+' .cbtn');
+  if(box.dataset.m==='d'){box.dataset.m='';box.innerHTML='';return;}
+  btns.forEach(function(b){b.disabled=true;});
+  box.innerHTML='<div class="iload">Fazendo deep dive...</div>';
+  try{
+    var t=await ai('Você está ajudando uma PM a entender um goal técnico do time de dados. Explique:\n\n1. **O que esse goal significa** — explique cada componente técnico (ex: "Iceberg", "DAG", "EKS", "Lakehouse") em linguagem simples.\n2. **Como as peças se conectam** — como os componentes se relacionam nesse contexto.\n3. **Por que importa para o negócio** — impacto real se feito (ou não).\n4. **O que pode dar errado** — riscos que a PM deveria monitorar.\n\nGoal: '+goal+'\nOutput: '+(output||'não especificado')+'\nOwner: '+owner+'\nStatus: '+status+'\nUpdates: '+(allU||'nenhum')+'\n\nUse linguagem clara. Explique termos técnicos entre parênteses.','d-'+key);
+    box.dataset.m='d';
+    box.innerHTML='<div class="exbox deep"><div class="exlbl">Deep dive</div>'+md(t)+'</div>';
+  }catch(e){box.innerHTML='<div class="exbox deep" style="color:var(--red)">Erro: '+e.message+'</div>';}
+  btns.forEach(function(b){b.disabled=false;});
 }
 
-// ─── Per-card AI handlers ─────────────────────────────────────────────────────
-async function handleDeepDive(idx) {
-  const goal = renderGoalList[idx];
-  if (!goal) return;
-  const key = goalKey(goal) + ':deepdive';
-  const panel = document.getElementById(`ai-d-${idx}`);
-  if (!panel) return;
-
-  // Only toggle if a successful result is already loaded
-  if (panel.dataset.ready === '1') {
-    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-    return;
-  }
-
-  panel.style.display = 'block';
-  panel.innerHTML = '<span class="ai-loading-inline">⏳ Fazendo deep dive...</span>';
-
-  try {
-    const cached = aiCache.get(key);
-    const text = cached || await callClaude(deepDivePrompt(goal, currentWeek));
-    if (!cached) aiCache.set(key, text);
-    panel.dataset.ready = '1';
-    panel.innerHTML = `<div class="card-ai-panel-label">🔍 Deep dive</div><div class="panel-body">${marked.parse(text)}</div>`;
-  } catch (err) {
-    // Clear panel so the button retries on next click
-    panel.dataset.ready = '0';
-    panel.innerHTML = '';
-    panel.style.display = 'none';
-    // Show a temporary error message next to the button
-    const tmp = document.createElement('span');
-    tmp.style.cssText = 'font-size:11px;color:var(--red);padding:2px 4px;display:inline-block';
-    tmp.textContent = `Erro: ${err.message}`;
-    panel.insertAdjacentElement('beforebegin', tmp);
-    setTimeout(() => tmp.remove(), 6000);
-  }
+async function doAnalysis(){
+  var btn=document.getElementById('abtn'),res=document.getElementById('ares');
+  btn.disabled=true;btn.textContent='Analisando...';
+  res.innerHTML='<div class="iload" style="padding:14px 0">Analisando todos os goals...</div>';
+  try{
+    var sum=D.map(function(g){return{owner:g.owner,team:g.team,goal:g.goal,status:g.current,updates:[1,2,3,4,5,6].map(function(n){return{w:n,s:gW(g,n).s,u:gW(g,n).u};}).filter(function(w){return w.s||w.u;})};});
+    var t=await ai('PM Analysis do ciclo Q2-C1, semana '+CW+' de 6.\n\nProduza um briefing com estas 4 seções:\n\n**1. UPDATES NÃO ENVIADOS**\nQuem não atualizou na semana '+CW+'?\n\n**2. ITENS EM RISCO**\nGoals Yellow/Red, bloqueios, estagnação. Por quê cada um é preocupante (1-2 frases).\n\n**3. O QUE ESTÁ INDO BEM**\n3-5 goals com boa evolução.\n\n**4. ACTION ITEMS**\n3-5 ações concretas para essa semana.\n\nEm português, direto.\n\n'+JSON.stringify(sum),'analysis');
+    res.innerHTML='<div class="tool-result">'+md(t)+'</div>';
+  }catch(e){res.innerHTML='<p style="color:var(--red);padding-top:12px">Erro: '+e.message+'</p>';}
+  btn.disabled=false;btn.textContent='Rodar análise ↗';
 }
 
-// ─── AI Analysis tab ──────────────────────────────────────────────────────────
-async function runAnalysis() {
-  const btn = document.getElementById('run-analysis-btn');
-  const panel = document.getElementById('analysis-result-panel');
-  if (!getApiKey()) { openApiModal(); return; }
-  btn.disabled = true; btn.textContent = '⏳ Analisando...';
-  panel.innerHTML = '<div class="ai-loading-full">Analisando todos os goals... isso pode levar alguns segundos.</div>';
-  const key = `analysis:${selectedCycle}:${currentWeek}`;
-  try {
-    const text = await callClaude(analysisPrompt(goalsToJSON(visibleGoals(), currentWeek), currentWeek));
-    aiCache.set(key, text);
-    panel.innerHTML = marked.parse(text);
-    btn.textContent = '🔄 Re-rodar análise'; btn.disabled = false;
-  } catch (err) {
-    panel.innerHTML = `<div class="ai-error-full">Erro: ${esc(err.message)}</div>`;
-    btn.textContent = '▶ Rodar análise'; btn.disabled = false;
-  }
+async function doMarcela(){
+  var btn=document.getElementById('mbtn'),res=document.getElementById('mres');
+  btn.disabled=true;btn.textContent='Analisando...';
+  res.innerHTML='<div class="iload" style="padding:14px 0">Aplicando a lente da Marcela...</div>';
+  try{
+    var sum=D.map(function(g){return{owner:g.owner,team:g.team,goal:g.goal,status:g.current,priority:g.priority,updates:[1,2,3,4,5,6].map(function(n){return{w:n,s:gW(g,n).s,u:gW(g,n).u};}).filter(function(w){return w.s||w.u;})};});
+    var t=await ai('Simule a perspectiva da Marcela, líder com forte olhar de PM e governança. Ela consistentemente:\n1. Pergunta "qual é o valor de negócio?"\n2. Identifica ownership indefinido\n3. Lê vagueza como risco\n4. Pergunta "o que acontece se atrasar?"\n5. Questiona dependências de terceiros\n6. Exige critério de done claro\n7. Pergunta "qual é a versão mais simples que já entrega valor?" — quer slices menores e releasable\n8. Propõe realocação proativamente\n\nAnalise o ciclo Q2-C1 e responda em português com estas seções:\n\n**🔍 PERGUNTAS QUE A MARCELA FARIA**\n[owner/goal] "Pergunta exata" — por que ela perguntaria\n\n**⚠️ SINAIS DE RISCO**\n4-6 riscos: outputs vagos, owners faltando, blockers, estagnação, sem critério de done\n\n**✂️ "QUAL É A VERSÃO MAIS SIMPLES?"**\n3-4 goals onde ela desafiaria o time. Como seria o MVP/slice?\n\n**👤 QUEM PRECISA DE UMA CONVERSA**\n2-3 pessoas que ela buscaria essa semana e por quê.\n\nDireto, no tom dela.\n\n'+JSON.stringify(sum),'marcela');
+    res.innerHTML='<div class="tool-result">'+md(t)+'</div>';
+  }catch(e){res.innerHTML='<p style="color:var(--red);padding-top:12px">Erro: '+e.message+'</p>';}
+  btn.disabled=false;btn.textContent='Rodar Marcela Mode ↗';
 }
 
-// ─── Marcela Mode tab ─────────────────────────────────────────────────────────
-async function runMarcela() {
-  const btn = document.getElementById('run-marcela-btn');
-  const panel = document.getElementById('marcela-result-panel');
-  if (!getApiKey()) { openApiModal(); return; }
-  btn.disabled = true; btn.textContent = '⏳ Ativando Marcela Mode...';
-  panel.innerHTML = '<div class="ai-loading-full">Aplicando a lente da Marcela nos goals...</div>';
-  const key = `marcela:${selectedCycle}:${currentWeek}`;
-  try {
-    const text = await callClaude(marcelaPrompt(goalsToJSON(visibleGoals(), currentWeek), currentWeek));
-    aiCache.set(key, text);
-    panel.innerHTML = marked.parse(text);
-    btn.textContent = '🔄 Re-rodar'; btn.disabled = false;
-  } catch (err) {
-    panel.innerHTML = `<div class="ai-error-full">Erro: ${esc(err.message)}</div>`;
-    btn.textContent = '▶ Rodar Marcela Mode'; btn.disabled = false;
-  }
-}
-
-// ─── Goal card ────────────────────────────────────────────────────────────────
-function goalCardHTML(goal, week) {
-  const idx = renderIdx++;
-  renderGoalList[idx] = goal;
-
-  const state = classifyGoal(goal, week);
-  const st = effStatus(goal, week);
-
-  let cardCls;
-  if      (state === 'missing')       cardCls = 'c-missing';
-  else if (state === 'not-started')   cardCls = 'c-not-started';
-  else if (state === 'never-updated') cardCls = 'c-never-updated';
-  else cardCls = { 'on-track':'c-on-track','at-risk':'c-at-risk','blocked':'c-blocked','done':'c-done','abandoned':'c-abandoned' }[st] || '';
-
-  const warningHTML = state === 'missing' ? `<span class="card-warning">⚠ sem S${week}</span>` : '';
-
-  const lastUpd = getLastUpdate(goal, week);
-  let boxHTML;
-  if (lastUpd) {
-    const txt = lastUpd.text.length > 280 ? lastUpd.text.slice(0,280)+'…' : lastUpd.text;
-    boxHTML = `<div class="update-box"><div class="update-meta"><span class="update-week-label">Semana ${lastUpd.week}</span>${statusBadgeHTML(lastUpd.status)}</div><div class="update-text">${esc(txt)}</div></div>`;
-  } else {
-    const msgCls = state==='missing'?'missing':state==='not-started'?'not-started':'never-updated';
-    const msgTxt = state==='missing'?`Sem atualização para S${week}`:state==='not-started'?'Goal não iniciado':'Goal nunca atualizado';
-    boxHTML = `<div class="state-msg ${msgCls}">${msgTxt}</div>`;
-  }
-
-  const dotsHTML = goal.weeks.map((wd,i) => `<div class="week-dot-item"><span class="week-dot-lbl">S${i+1}</span><div class="week-dot ${dotCls(wd.status)} ${i+1===week?'wdc':''}"></div></div>`).join('');
-
-  const title = goal.output || goal.goal;
-
-  // Pre-populate deep dive panel from cache (hidden by default)
-  const dKey = goalKey(goal) + ':deepdive';
-  const dCached = aiCache.get(dKey);
-  const dContent = dCached ? `<div class="card-ai-panel-label">🔍 Deep dive</div><div class="panel-body">${marked.parse(dCached)}</div>` : '';
-
-  return `<div class="goal-card ${cardCls}">
-    <div class="card-top">
-      <div class="card-goal-name">${esc(title)}</div>
-      ${goal.priority ? `<span class="card-priority">${esc(goal.priority)}</span>` : ''}
-    </div>
-    <div class="card-status-row">${statusBadgeHTML(st)}${warningHTML}</div>
-    ${boxHTML}
-    <div class="week-dots">${dotsHTML}</div>
-    <div class="card-ai-buttons">
-      <button class="btn-ai btn-deepdive" onclick="handleDeepDive(${idx})">🔍 Deep Dive</button>
-    </div>
-    <div class="card-ai-panel panel-deepdive" id="ai-d-${idx}" style="display:none">${dContent}</div>
-  </div>`;
-}
-
-// ─── Grouping ─────────────────────────────────────────────────────────────────
-function groupByTeamOwner(list) {
-  const teams = new Map();
-  for (const g of list) {
-    const team  = g.team  || '(sem time)';
-    const owner = g.owner || '(sem owner)';
-    if (!teams.has(team)) teams.set(team, new Map());
-    const owners = teams.get(team);
-    if (!owners.has(owner)) owners.set(owner, []);
-    owners.get(owner).push(g);
-  }
-  return teams;
-}
-
-function ownerGroupHTML(owner, ownerGoals, week) {
-  const mu = ownerGoals.filter(g => classifyGoal(g, week) !== 'ok').length;
-  const ar = ownerGoals.filter(g => isAtRisk(g, week)).length;
-  const badges = [mu>0?`<span class="mini-badge mu">${mu} sem update</span>`:'', ar>0?`<span class="mini-badge ar">${ar} at risk</span>`:''].filter(Boolean).join('');
-  return `<div class="owner-group">
-    <div class="owner-header">
-      <div class="owner-avatar" style="background:${avatarColor(owner)}">${initials(owner)}</div>
-      <div><div class="owner-name">${esc(owner)}</div></div>
-      <div class="owner-mini-badges">${badges}</div>
-    </div>
-    <div class="cards-grid">${ownerGoals.map(g => goalCardHTML(g, week)).join('')}</div>
-  </div>`;
-}
-
-function renderTeamOwnerGroups(list, week) {
-  if (!list.length) return '<div class="empty-state">Nenhum goal nesta categoria.</div>';
-  const teams = groupByTeamOwner(list);
-  return [...teams.entries()].map(([team, ownersMap]) => {
-    const tg = [...ownersMap.values()].flat();
-    const ownersHTML = [...ownersMap.entries()].map(([o,og]) => ownerGroupHTML(o,og,week)).join('');
-    return `<div class="team-section">
-      <div class="team-section-header"><span class="team-section-name">${esc(team)}</span><span class="team-section-count">${tg.length} goals</span></div>
-      <div class="team-section-body">${ownersHTML}</div>
-    </div>`;
+function md(t){
+  return t.split('\n').map(function(l){
+    if(/^\*\*[^*]/.test(l)&&l.endsWith('**'))return '<h3>'+l.replace(/\*\*/g,'')+'</h3>';
+    if(/^#{1,3}\s/.test(l))return '<h3>'+l.replace(/^#+\s/,'')+'</h3>';
+    if(l.startsWith('- ')||l.startsWith('• '))return '<li>'+l.slice(2).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')+'</li>';
+    if(!l.trim())return '<br>';
+    return '<p>'+l.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')+'</p>';
   }).join('');
 }
 
-// ─── Tab renderers ────────────────────────────────────────────────────────────
-function renderOverview(week) {
-  const vg = visibleGoals();
-  const total   = vg.length;
-  const onTrack = vg.filter(g => effStatus(g,week)==='on-track').length;
-  const atRisk  = vg.filter(g => isAtRisk(g,week)).length;
-  const noUpd   = vg.filter(g => classifyGoal(g,week)!=='ok').length;
-
-  const stats = `<div class="stats-row">
-    <div class="stat-card"><div class="stat-label">Total Goals</div><div class="stat-value">${total}</div></div>
-    <div class="stat-card s-on-track"><div class="stat-label">On Track</div><div class="stat-value">${onTrack}</div></div>
-    <div class="stat-card s-at-risk"><div class="stat-label">At Risk</div><div class="stat-value">${atRisk}</div></div>
-    <div class="stat-card s-sem-update"><div class="stat-label">Sem Update S${week}</div><div class="stat-value">${noUpd}</div></div>
-  </div>`;
-
-  const teams = groupByTeamOwner(vg);
-  const tbRows = [...teams.entries()].map(([team, ownersMap]) => {
-    const tg = [...ownersMap.values()].flat();
-    const ot = tg.filter(g => effStatus(g,week)==='on-track').length;
-    const ar = tg.filter(g => effStatus(g,week)==='at-risk').length;
-    const bl = tg.filter(g => effStatus(g,week)==='blocked').length;
-    const dn = tg.filter(g => effStatus(g,week)==='done').length;
-    const su = tg.filter(g => classifyGoal(g,week)!=='ok').length;
-    const pill = (n,cls,lbl) => n>0?`<span class="tb-pill ${cls}">${n} ${lbl}</span>`:`<span class="tp-zero">—</span>`;
-    return `<div class="tb-row">
-      <span class="tb-team">${esc(team)}</span><span class="tb-total">${tg.length}</span>
-      ${pill(ot,'tp-on-track','on track')}${pill(ar,'tp-at-risk','at risk')}
-      ${pill(bl,'tp-blocked','blocked')}${pill(dn,'tp-done','done')}${pill(su,'tp-sem-update','sem upd')}
-    </div>`;
-  }).join('');
-
-  const breakdown = `<div class="section-header" style="margin-top:0"><span class="section-title">Por time</span></div>
-    <div class="team-breakdown">
-      <div class="tb-header"><span>Time</span><span>Total</span><span>On track</span><span>At risk</span><span>Blocked</span><span>Done</span><span>Sem update</span></div>
-      ${tbRows}
-    </div>`;
-
-  const arGoals = vg.filter(g => isAtRisk(g,week));
-  const arHTML = arGoals.length ? `<hr class="divider"><div class="section-header" style="margin-top:0"><span class="section-title">At Risk</span><span class="section-count">${arGoals.length} goals</span></div>${renderTeamOwnerGroups(arGoals,week)}` : '';
-
-  return stats + breakdown + arHTML;
+// ── WEEK ───────────────────────────────────────────────────────────────
+function setW(w){
+  CW=parseInt(w);
+  if(!D.length)return;
+  document.getElementById('cyc').textContent='Q2-C1 · Semana '+CW+' de 6';
+  resetTabs();updBadges();show('ov');
 }
 
-function renderOnTrack(week) {
-  const vg = visibleGoals().filter(g => isOnTrack(g,week));
-  if (!vg.length) return '<div class="empty-state">Nenhum goal on track ou done no momento.</div>';
-  return renderTeamOwnerGroups(vg, week);
+// ── RENDERERS ──────────────────────────────────────────────────────────
+function rOv(){
+  var ms=getMiss(),rk=getRisk(),gd=getGood();
+  var h='<div class="stats">'+
+    '<div class="stat"><div class="stat-l">Total goals</div><div class="stat-n">'+D.length+'</div></div>'+
+    '<div class="stat"><div class="stat-l">On track</div><div class="stat-n cg">'+gd.length+'</div></div>'+
+    '<div class="stat"><div class="stat-l">At risk</div><div class="stat-n cy">'+rk.length+'</div></div>'+
+    '<div class="stat"><div class="stat-l">Sem update S'+CW+'</div><div class="stat-n cr">'+ms.length+'</div></div>'+
+  '</div>';
+  if(ms.length){
+    h+='<div class="sect"><span class="sdot" style="background:var(--red)"></span>Sem update — semana '+CW+'</div>';
+    ms.forEach(function(g){h+='<div class="mstrip"><span class="mown">'+g.owner+'</span><span class="mgoal">'+g.goal.slice(0,90)+'</span></div>';});
+    h+='<div style="height:16px"></div>';
+  }
+  if(rk.length){
+    h+='<div class="sect"><span class="sdot" style="background:#ef9f27"></span>At risk</div>';
+    ownerGroups(rk).forEach(function(grp){h+=ownerBlock(grp);});
+  }
+  return h;
 }
 
-function renderSemUpdate(week) {
-  const vg = visibleGoals();
-  const all = vg.filter(g => classifyGoal(g,week)!=='ok');
-  if (!all.length) return '<div class="empty-state">Todos os goals têm update para esta semana 🎉</div>';
-  const mc=all.filter(g=>classifyGoal(g,week)==='missing').length;
-  const nc=all.filter(g=>classifyGoal(g,week)==='not-started').length;
-  const vc=all.filter(g=>classifyGoal(g,week)==='never-updated').length;
-  const breakdown = `<div class="count-breakdown"><strong>${all.length} goals</strong> sem update &nbsp;·&nbsp; <span style="color:var(--red);font-weight:600">${mc} sem S${week}</span> &nbsp;·&nbsp; <span style="color:#9333ea;font-weight:600">${nc} not started</span> &nbsp;·&nbsp; <span style="color:#6b7280;font-weight:600">${vc} nunca atualizados</span></div>`;
-  return breakdown + renderTeamOwnerGroups(all, week);
+function rMs(){
+  var ms=getMiss();
+  var real=ms.filter(function(g){return gstate(g)==='missing';}).length;
+  var ns=ms.filter(function(g){return gstate(g)==='notstarted';}).length;
+  var nu=ms.filter(function(g){return gstate(g)==='neverupd';}).length;
+  var h='<p style="font-size:12px;color:var(--text2);margin-bottom:14px">'+ms.length+' goals sem update <span style="color:var(--text3)">('+real+' sem S'+CW+' · '+ns+' not started · '+nu+' nunca atualizados)</span></p>';
+  ownerGroups(ms).forEach(function(grp){h+=ownerBlock(grp);});
+  return h;
 }
 
-function renderAtRisk(week) {
-  const vg = visibleGoals().filter(g => isAtRisk(g,week));
-  if (!vg.length) return '<div class="empty-state">Nenhum goal at risk no momento 🎉</div>';
-  return renderTeamOwnerGroups(vg, week);
+function rRk(){
+  var rk=getRisk();
+  var h='<p style="font-size:12px;color:var(--text2);margin-bottom:14px">'+rk.length+' goals Yellow/Red/Abandoned</p>';
+  ownerGroups(rk).forEach(function(grp){h+=ownerBlock(grp);});
+  return h;
 }
 
-function renderAIAnalysis(week) {
-  const key = `analysis:${selectedCycle}:${week}`;
-  const cached = aiCache.get(key);
-  const cycle = selectedCycle === 'all' ? 'Todos os ciclos' : selectedCycle;
-  return `<div class="ai-tab-header">
-    <div>
-      <div class="ai-tab-title">Análise do Ciclo</div>
-      <div class="ai-tab-context">Semana ${week} de 6 · ${cycle}</div>
-    </div>
-    <button class="run-btn" id="run-analysis-btn" onclick="runAnalysis()">${cached?'🔄 Re-rodar análise':'▶ Rodar análise'}</button>
-  </div>
-  <p class="ai-tab-desc">Envia todos os goals visíveis para o Claude e gera um briefing estruturado: quem não atualizou, itens em risco, o que está indo bem e action items para a PM.</p>
-  <div id="analysis-result-panel" class="analysis-result">${cached ? marked.parse(cached) : ''}</div>`;
+function rAl(){
+  var h='';
+  ownerGroups(D).forEach(function(grp){h+=ownerBlock(grp);});
+  return h;
 }
 
-function renderMarcela(week) {
-  const key = `marcela:${selectedCycle}:${week}`;
-  const cached = aiCache.get(key);
-  const cycle = selectedCycle === 'all' ? 'Todos os ciclos' : selectedCycle;
-  return `<div class="ai-tab-header">
-    <div>
-      <div class="ai-tab-title">Marcela Mode ✦</div>
-      <div class="ai-tab-context">Semana ${week} de 6 · ${cycle}</div>
-    </div>
-    <button class="run-btn run-btn-marcela" id="run-marcela-btn" onclick="runMarcela()">${cached?'🔄 Re-rodar':'▶ Rodar Marcela Mode'}</button>
-  </div>
-  <p class="ai-tab-desc">Simula a lente de governança da Marcela: perguntas diretas por goal, sinais de risco, metas para fatiar, e quem precisa de uma conversa esta semana.</p>
-  <div id="marcela-result-panel" class="analysis-result marcela-result">${cached ? marked.parse(cached) : ''}</div>`;
+function rAn(){
+  return '<div class="toolbox">'+
+    '<p class="tool-intro">Briefing completo de PM — quem não atualizou, o que está em risco, o que está indo bem, e o que fazer essa semana.</p>'+
+    '<button class="pbtn" id="abtn" onclick="doAnalysis()">Rodar análise ↗</button>'+
+    '<div id="ares"></div>'+
+  '</div>';
 }
 
-// ─── Badges ───────────────────────────────────────────────────────────────────
-function updateBadges(week) {
-  const vg = visibleGoals();
-  document.getElementById('badge-overview').textContent   = vg.length;
-  document.getElementById('badge-on-track').textContent   = vg.filter(g => isOnTrack(g,week)).length;
-  document.getElementById('badge-sem-update').textContent = vg.filter(g => classifyGoal(g,week)!=='ok').length;
-  document.getElementById('badge-at-risk').textContent    = vg.filter(g => isAtRisk(g,week)).length;
+function rMc(){
+  return '<div>'+
+    '<div class="mbox">'+
+      '<div class="mtitle">✦ Marcela Mode</div>'+
+      '<div class="msub">Simula o olhar da Marcela — perguntas de PM e governança, versões mais simples, sinais de risco, quem precisa de uma conversa.</div>'+
+      '<div class="mtags">'+
+        '<span class="mtag">valor de negócio</span><span class="mtag">ownership claro</span><span class="mtag">vagueza = risco</span>'+
+        '<span class="mtag">versão mais simples</span><span class="mtag">releasable?</span><span class="mtag">dependências externas</span><span class="mtag">realocação proativa</span>'+
+      '</div>'+
+    '</div>'+
+    '<button class="mpbtn" id="mbtn" onclick="doMarcela()">Rodar Marcela Mode ↗</button>'+
+    '<div id="mres"></div>'+
+  '</div>';
 }
 
-// ─── Full render ──────────────────────────────────────────────────────────────
-function renderDashboard() {
-  renderIdx = 0; renderGoalList = [];
-  const cycle = selectedCycle === 'all' ? '' : `${selectedCycle} · `;
-  document.getElementById('cycleLabel').textContent = `${cycle}Semana ${currentWeek} de 6`;
-  updateBadges(currentWeek);
-  document.getElementById('tab-overview').innerHTML   = renderOverview(currentWeek);
-  document.getElementById('tab-on-track').innerHTML   = renderOnTrack(currentWeek);
-  document.getElementById('tab-sem-update').innerHTML = renderSemUpdate(currentWeek);
-  document.getElementById('tab-at-risk').innerHTML    = renderAtRisk(currentWeek);
-  document.getElementById('tab-ai-analysis').innerHTML = renderAIAnalysis(currentWeek);
-  document.getElementById('tab-marcela').innerHTML     = renderMarcela(currentWeek);
-  switchTab(activeTab);
+// ── NAV ────────────────────────────────────────────────────────────────
+var TABS=['ov','ms','rk','al','an','mc'];
+
+function resetTabs(){
+  TABS.forEach(function(t){var el=document.getElementById('t-'+t);el.dataset.r='';el.innerHTML='';});
 }
 
-// ─── Tab switching ────────────────────────────────────────────────────────────
-function switchTab(tab) {
-  activeTab = tab;
-  document.querySelectorAll('.sidebar-tab').forEach(el => el.classList.toggle('active', el.dataset.tab === tab));
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.toggle('active', el.id === `tab-${tab}`));
+function show(name){
+  TABS.forEach(function(t){document.getElementById('t-'+t).style.display=t===name?'block':'none';});
+  document.querySelectorAll('.ni').forEach(function(b){
+    var txt=b.textContent.trim();
+    var on=(name==='ov'&&txt.startsWith('Ov'))||(name==='ms'&&txt.startsWith('Sem'))||
+           (name==='rk'&&txt.startsWith('At'))||(name==='al'&&txt.startsWith('To'))||
+           (name==='an'&&txt.startsWith('AI'))||(name==='mc'&&txt.startsWith('Mar'));
+    b.classList.toggle('on',on);
+  });
+  var el=document.getElementById('t-'+name);
+  if(el.dataset.r)return;el.dataset.r='1';
+  if(name==='ov')el.innerHTML=rOv();
+  else if(name==='ms')el.innerHTML=rMs();
+  else if(name==='rk')el.innerHTML=rRk();
+  else if(name==='al')el.innerHTML=rAl();
+  else if(name==='an')el.innerHTML=rAn();
+  else if(name==='mc')el.innerHTML=rMc();
 }
 
-// ─── File upload ──────────────────────────────────────────────────────────────
-document.getElementById('fileInput').addEventListener('change', async e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  try {
-    const rows = await readFile(file);
-    goals = parseGoals(rows);
-    if (!goals.length) { alert('Nenhum goal encontrado. Verifique se o arquivo tem as colunas corretas.'); e.target.value=''; return; }
-    selectedCycle = 'all';
-    currentWeek = detectCurrentWeek(goals);
-    document.getElementById('weekSelector').value = currentWeek;
-    populateCycleSelector();
-    const now = new Date();
-    document.getElementById('lastUpdated').textContent = `Atualizado às ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
-    document.getElementById('welcomeScreen').style.display = 'none';
-    renderDashboard();
-  } catch (err) { alert('Erro ao processar o arquivo: ' + err.message); console.error(err); }
-  e.target.value = '';
-});
-
-// ─── Selectors ────────────────────────────────────────────────────────────────
-document.getElementById('cycleSelector').addEventListener('change', e => { selectedCycle = e.target.value; if (goals.length) renderDashboard(); });
-document.getElementById('weekSelector').addEventListener('change', e => { currentWeek = parseInt(e.target.value); if (goals.length) renderDashboard(); });
-
-// ─── Init ─────────────────────────────────────────────────────────────────────
-updateApiKeyBtn();
+function updBadges(){
+  document.getElementById('b-ov').textContent=getMiss().length;
+  document.getElementById('b-ms').textContent=getMiss().length;
+  document.getElementById('b-rk').textContent=getRisk().length;
+  document.getElementById('b-al').textContent=D.length;
+}
 </script>
 </body>
 </html>
