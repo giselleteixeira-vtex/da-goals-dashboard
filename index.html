@@ -971,7 +971,7 @@ function switchTab(tab) {
 }
 
 // ─── Google Sheets sync ───────────────────────────────────────────────────────
-const SHEETS_URL = 'https://script.google.com/a/macros/vtex.com/s/AKfycbxAdllQg8yrQKQns9W4eG654yY9pi4hDzF2xaPvPzwGTTrvM7u7H6N-WT21mSLMnD-0/exec?token=vtex-goals-2026';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbznYl1LgzGpdcBQrf1V6wne9cf5TUHLP206N2RizrFS90BuIyki2-nUvDr6FW-Zb0pWgg/exec?token=vtex-goals-2026';
 
 function setSyncError(msg) {
   document.getElementById('syncError').textContent = msg ? `⚠ ${msg}` : '';
@@ -1034,7 +1034,6 @@ document.getElementById('weekSelector').addEventListener('change', e => { curren
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 updateApiKeyBtn();
-syncSheets(); // auto-sync on load; welcome screen stays visible if it fails
 </script>
 </body>
 </html>
