@@ -722,7 +722,7 @@ async function runAnalysis() {
   panel.innerHTML = '<div class="ai-loading-full">Analisando todos os goals... isso pode levar alguns segundos.</div>';
   const key = `analysis:${selectedCycle}:${currentWeek}`;
   try {
-    const text = await callClaude(analysisPrompt(goalsToJSON(visibleGoals(), currentWeek), currentWeek));
+    const text = await callClaude(analysisPrompt(goalsToJSON(visibleGoals(), currentWeek), currentWeek), 4000);
     aiCache.set(key, text);
     panel.innerHTML = marked.parse(text);
     btn.textContent = '🔄 Re-rodar análise'; btn.disabled = false;
@@ -741,7 +741,7 @@ async function runMarcela() {
   panel.innerHTML = '<div class="ai-loading-full">Aplicando a lente da Marcela nos goals...</div>';
   const key = `marcela:${selectedCycle}:${currentWeek}`;
   try {
-    const text = await callClaude(marcelaPrompt(goalsToJSON(visibleGoals(), currentWeek), currentWeek));
+    const text = await callClaude(marcelaPrompt(goalsToJSON(visibleGoals(), currentWeek), currentWeek), 4000);
     aiCache.set(key, text);
     panel.innerHTML = marked.parse(text);
     btn.textContent = '🔄 Re-rodar'; btn.disabled = false;
@@ -1001,8 +1001,7 @@ async function syncSheets() {
     document.getElementById('welcomeScreen').style.display = 'none';
     renderDashboard();
   } catch (err) {
-    const msg = err.message.includes('fetch') || err.message.includes('network') || !navigator.onLine
-      ? 'Sem conexão' : err.message;
+    const msg = !navigator.onLine ? 'Sem conexão' : err.message;
     setSyncError(msg);
   }
   btn.disabled = false;
